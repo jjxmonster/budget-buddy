@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BudgetBuddy
 
-## Getting Started
+## Table of Contents
 
-First, run the development server:
+- [Project Description](#project-description)
+- [Tech Stack](#tech-stack)
+- [Getting Started Locally](#getting-started-locally)
+- [Available Scripts](#available-scripts)
+- [Project Scope](#project-scope)
+- [Project Status](#project-status)
+- [License](#license)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Project Description
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+BudgetBuddy is an intuitive expense management application that allows users to add, edit, delete, and filter expenses. With an integrated AI assistant, users can ask questions about their expense history and receive quick insights and summaries. Additionally, the application supports the management of expense categories and sources, ensuring a streamlined approach to tracking personal finances.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Tech Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**Frontend:**
 
-## Learn More
+- Next.js 15 (with turbopack)
+- React 19
+- TypeScript 5
+- Tailwind CSS 4
+- shadcn/ui
 
-To learn more about Next.js, take a look at the following resources:
+**Backend:**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Supabase
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**AI Integration:**
 
-## Deploy on Vercel
+- Openrouter.ai
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Getting Started Locally
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Ensure you have Node.js version `22.14.0` installed (as specified in the .nvmrc file).
+2. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd budget-buddy
+   ```
+3. Install the dependencies:
+   ```bash
+   npm install
+   ```
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
+5. Open [http://localhost:3000](http://localhost:3000) in your browser to view the application.
+
+## Available Scripts
+
+- `npm run dev`: Starts the development server using Next.js and turbopack.
+- `npm run build`: Builds the application for production.
+- `npm run start`: Runs the production server.
+- `npm run lint`: Analyzes the code for linting issues using ESLint.
+- `npm run lint:fix`: Automatically fixes linting issues where possible.
+- `npm run format`: Formats the codebase using Prettier.
+- `npm run prepare`: Sets up Git hooks using husky.
+
+## Project Scope
+
+BudgetBuddy is designed to provide a comprehensive solution for managing personal expenses. It offers:
+
+- **Expense Management:** Easily add, edit, delete, and filter expenses with strict validation rules.
+- **Category & Source Management:** Organize expenses by managing custom categories and sources.
+- **AI Assistant:** Interact with an AI-powered assistant for real-time insights into expense history.
+- **Secure Access:** Ensure that users have private and secure access to their financial data.
+
+## Project Status
+
+This project is under active development. New features and improvements are continuously being implemented as outlined in the product requirements document (PRD).
+
+## License
+
+Distributed under the MIT License. See `LICENSE` for more information.
