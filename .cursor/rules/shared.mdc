@@ -1,0 +1,45 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+## Tech Stack
+
+- Next.js 15
+- TypeScript 5
+- React 19
+- Tailwind 4
+- Shadcn/ui
+- Supabase
+
+## Project Structure
+
+When introducing changes to the project, always follow the directory structure below:
+
+- `.` - source code
+- `./app/(main)` - Next.js main pages
+- `./app/api` - API endpoints
+- `./app/{{name}}` - Next.js other pages
+- `./db` - Supabase clients and types
+- `./types.ts` - Shared types for backend and frontend (Entities, DTOs)
+- `./components` - Client-side components written in React
+- `./components/ui` - Client-side components from Shadcn/ui
+- `./lib` - Services and helpers 
+- `./assets` - static internal assets
+- `./public` - public assets
+
+When modifying the directory structure, always update this section.
+
+## Coding practices
+
+### Guidelines for clean code
+
+- Use feedback from linters to improve the code when making changes.
+- Prioritize error handling and edge cases.
+- Handle errors and edge cases at the beginning of functions.
+- Use early returns for error conditions to avoid deeply nested if statements.
+- Place the happy path last in the function for improved readability.
+- Avoid unnecessary else statements; use if-return pattern instead.
+- Use guard clauses to handle preconditions and invalid states early.
+- Implement proper error logging and user-friendly error messages.
+- Consider using custom error types or error factories for consistent error handling.
