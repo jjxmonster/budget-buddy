@@ -1,3 +1,4 @@
+export const STATUS_OK = 200
 export const STATUS_CREATED = 201
 export const STATUS_BAD_REQUEST = 400
 export const STATUS_UNPROCESSABLE_ENTITY = 422
