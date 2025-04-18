@@ -3,13 +3,18 @@
 import { Plus } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
+import { ConfirmationModal } from "@/app/(main)/dashboard/expenses/_components/confirmation-modal"
+import { ExpenseFormModal, ExpenseFormValues } from "@/app/(main)/dashboard/expenses/_components/expense-form-modal"
+import { ExpenseTable } from "@/app/(main)/dashboard/expenses/_components/expense-table"
 import { Button } from "@/components/ui/button"
-import { ExpenseDTO } from "@/types/types"
-import { ExpenseTable } from "./expense-table"
-// import { ConfirmationModal } from "./confirmation-modal"
-// import { ExpenseFormModal } from "./expense-form-modal"
+import { getQueryClient } from "@/lib/get-query-client"
+import { createExpense, deleteExpense, updateExpense } from "@/services/expense.service"
+import { CreateExpenseCommand, ExpenseDTO, UpdateExpenseCommand } from "@/types/types"
+
+export const DEFAULT_USER_ID = "e34f411a-6c4c-46d8-844f-c6f2fcc8b6f6"
 
 export function DashboardExpenseView() {
+	const queryClient = getQueryClient()
 	const [isFormModalOpen, setIsFormModalOpen] = useState(false)
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
 	const [selectedExpense, setSelectedExpense] = useState<ExpenseDTO | null>(null)
@@ -32,12 +37,32 @@ export function DashboardExpenseView() {
 		setIsDeleteModalOpen(true)
 	}
 
-	const handleFormSubmit = async (values: ExpenseDTO) => {
+	const handleFormSubmit = async (values: ExpenseFormValues) => {
 		try {
-			// API call will be implemented in the next step
+			const formattedValues = {
+				...values,
+				date: values.date.toISOString(),
+			}
+
+			if (formMode === "add") {
+				const createCommand: CreateExpenseCommand = {
+					...formattedValues,
+					user_id: DEFAULT_USER_ID,
+				}
+				await createExpense(createCommand)
+			} else if (selectedExpense) {
+				const updateCommand: UpdateExpenseCommand = {
+					...formattedValues,
+					id: selectedExpense.id,
+				}
+				await updateExpense(updateCommand)
+			}
+
+			await queryClient.invalidateQueries({ queryKey: ["expenses"] })
+
 			toast.success(`Expense ${formMode === "add" ? "added" : "updated"} successfully`)
 			setIsFormModalOpen(false)
-		} catch (error) {
+		} catch {
 			toast.error("Failed to save expense. Please try again.")
 		}
 	}
@@ -46,10 +71,13 @@ export function DashboardExpenseView() {
 		if (!selectedExpense) return
 
 		try {
-			// API call will be implemented in the next step
+			await deleteExpense(selectedExpense.id)
+
+			await queryClient.invalidateQueries({ queryKey: ["expenses"] })
+
 			toast.success("Expense deleted successfully")
 			setIsDeleteModalOpen(false)
-		} catch (error) {
+		} catch {
 			toast.error("Failed to delete expense. Please try again.")
 		}
 	}
@@ -66,7 +94,7 @@ export function DashboardExpenseView() {
 
 			<ExpenseTable onEdit={handleEditExpense} onDelete={handleDeleteExpense} />
 
-			{/* <ExpenseFormModal
+			<ExpenseFormModal
 				open={isFormModalOpen}
 				mode={formMode}
 				defaultValues={selectedExpense}
@@ -79,7 +107,7 @@ export function DashboardExpenseView() {
 				message="Are you sure you want to delete this expense?"
 				onConfirm={handleDeleteConfirm}
 				onCancel={() => setIsDeleteModalOpen(false)}
-			/> */}
+			/>
 		</div>
 	)
 }

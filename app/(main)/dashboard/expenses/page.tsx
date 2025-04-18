@@ -12,9 +12,14 @@ export const metadata: Metadata = {
 export default async function ExpensesPage() {
 	const queryClient = getQueryClient()
 
+	const defaultFilter = {
+		sort_by: "date",
+		order: "desc" as const,
+	}
+
 	await queryClient.prefetchQuery({
-		queryKey: ["expenses"],
-		queryFn: getExpenses,
+		queryKey: ["expenses", defaultFilter],
+		queryFn: () => getExpenses(defaultFilter),
 	})
 
 	return (

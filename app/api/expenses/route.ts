@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 import { DEFAULT_USER_ID } from "@/db/supabase.client"
 import { createExpense, getExpenses } from "@/services/expense.service"
-import { CreateExpenseCommand } from "@/types/types"
+import { CreateExpenseCommand, ExpenseDTO } from "@/types/types"
 import {
 	STATUS_BAD_REQUEST,
 	STATUS_CREATED,
@@ -24,15 +24,20 @@ export async function POST(request: Request) {
 	try {
 		const body = await request.json()
 		const expenseData = createExpenseSchema.parse(body)
-		const createExpensePayload: CreateExpenseCommand & { user_id: string } = {
+		const createExpensePayload: CreateExpenseCommand = {
 			...expenseData,
 			user_id: DEFAULT_USER_ID,
 		}
-		const { data: insertedData, error } = await createExpense(createExpensePayload)
-		if (error) {
-			return NextResponse.json({ error: error.message }, { status: STATUS_UNPROCESSABLE_ENTITY })
+
+		try {
+			const insertedData = await createExpense(createExpensePayload)
+			return NextResponse.json(insertedData, { status: STATUS_CREATED })
+		} catch (error) {
+			if (error instanceof Error) {
+				return NextResponse.json({ error: error.message }, { status: STATUS_UNPROCESSABLE_ENTITY })
+			}
+			return NextResponse.json({ error: "Failed to create expense" }, { status: STATUS_UNPROCESSABLE_ENTITY })
 		}
-		return NextResponse.json(insertedData, { status: STATUS_CREATED })
 	} catch (err) {
 		if (err instanceof z.ZodError) {
 			return NextResponse.json({ error: err.errors }, { status: STATUS_BAD_REQUEST })
@@ -42,18 +47,21 @@ export async function POST(request: Request) {
 }
 
 export async function GET(request: Request) {
-	const { searchParams } = new URL(request.url)
-	const page = searchParams.get("page")
-	const limit = searchParams.get("limit")
+	try {
+		const { searchParams } = new URL(request.url)
+		const page = searchParams.get("page")
+		const limit = searchParams.get("limit")
 
-	if (!page || !limit) {
-		return NextResponse.json({ error: "Page and limit are required" }, { status: STATUS_BAD_REQUEST })
+		if (!page || !limit) {
+			return NextResponse.json({ error: "Page and limit are required" }, { status: STATUS_BAD_REQUEST })
+		}
+
+		const expenses = await getExpenses()
+		return NextResponse.json(expenses, { status: STATUS_OK })
+	} catch (error) {
+		if (error instanceof Error) {
+			return NextResponse.json({ error: error.message }, { status: STATUS_UNPROCESSABLE_ENTITY })
+		}
+		return NextResponse.json({ error: "Internal Server Error" }, { status: STATUS_INTERNAL_SERVER_ERROR })
 	}
-
-	const { data: expenses, error } = await getExpenses(Number(page), Number(limit))
-
-	if (error) {
-		return NextResponse.json({ error: error.message }, { status: STATUS_UNPROCESSABLE_ENTITY })
-	}
-	return NextResponse.json(expenses, { status: STATUS_OK })
 }
