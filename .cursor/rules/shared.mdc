@@ -20,9 +20,9 @@ When introducing changes to the project, always follow the directory structure b
 - `./app/(main)` - Next.js main pages
 - `./app/api` - API endpoints
 - `./app/{{name}}` - Next.js other pages
+- `./app/{{name}}/_components` - Components for specific route
 - `./db` - Supabase clients and types
 - `./types.ts` - Shared types for backend and frontend (Entities, DTOs)
-- `./components` - Client-side components written in React
 - `./components/ui` - Client-side components from Shadcn/ui
 - `./lib` - Services and helpers 
 - `./assets` - static internal assets

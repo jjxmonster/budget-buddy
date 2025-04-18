@@ -1,12 +1,42 @@
-import supabase from "../db/supabase.client"
-import { CreateExpenseCommand } from "../types/types"
+"use server"
 
-export async function createExpense(expense: CreateExpenseCommand & { user_id: string }) {
-	const { data, error } = await supabase.from("expense").insert(expense).select().maybeSingle()
-	return { data, error }
+import supabase from "@/db/supabase.client"
+import { CreateExpenseCommand, ExpenseDTO, UpdateExpenseCommand } from "@/types/types"
+
+export async function getExpenses(): Promise<ExpenseDTO[]> {
+	const { data, error } = await supabase.from("expense").select("*").order("date", { ascending: false })
+
+	if (error) {
+		throw new Error("Failed to fetch expenses")
+	}
+
+	return data
 }
 
-export async function getExpenses(page: number, limit: number) {
-	const { data, error } = await supabase.from("expense").select("*").range((page - 1) * limit, page * limit)
-	return { data, error }
+export async function createExpense(command: CreateExpenseCommand): Promise<ExpenseDTO> {
+	const { data, error } = await supabase.from("expense").insert(command).select().single()
+
+	if (error) {
+		throw new Error("Failed to create expense")
+	}
+
+	return data
+}
+
+export async function updateExpense(command: UpdateExpenseCommand): Promise<ExpenseDTO> {
+	const { data, error } = await supabase.from("expense").update(command).eq("id", command.id).select().single()
+
+	if (error) {
+		throw new Error("Failed to update expense")
+	}
+
+	return data
+}
+
+export async function deleteExpense(id: number): Promise<void> {
+	const { error } = await supabase.from("expense").delete().eq("id", id)
+
+	if (error) {
+		throw new Error("Failed to delete expense")
+	}
 }
