@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { format } from "date-fns"
 import { Calendar as CalendarIcon } from "lucide-react"
+import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { Button } from "@/components/ui/button"
@@ -47,24 +48,20 @@ interface ExpenseFormModalProps {
 export function ExpenseFormModal({ open, mode, defaultValues, onClose, onSubmit }: ExpenseFormModalProps) {
 	const form = useForm<ExpenseFormValues>({
 		resolver: zodResolver(formSchema),
-		defaultValues: defaultValues
-			? {
-					title: defaultValues.title,
-					description: defaultValues.description || undefined,
-					date: defaultValues.date ? new Date(defaultValues.date) : new Date(),
-					amount: defaultValues.amount,
-					category_id: defaultValues.category_id || undefined,
-					source_id: defaultValues.source_id || undefined,
-				}
-			: {
-					title: "",
-					description: undefined,
-					date: new Date(),
-					amount: 0,
-					category_id: undefined,
-					source_id: undefined,
-				},
 	})
+
+	useEffect(() => {
+		if (open) {
+			form.reset({
+				title: defaultValues?.title || "",
+				description: defaultValues?.description || undefined,
+				date: defaultValues?.date ? new Date(defaultValues.date) : new Date(),
+				amount: defaultValues?.amount || 0,
+				category_id: defaultValues?.category_id || undefined,
+				source_id: defaultValues?.source_id || undefined,
+			})
+		}
+	}, [form, defaultValues, open])
 
 	const categories = [
 		{ id: 1, name: "Food" },
@@ -176,6 +173,7 @@ export function ExpenseFormModal({ open, mode, defaultValues, onClose, onSubmit 
 										<Select
 											onValueChange={(value) => field.onChange(Number(value))}
 											defaultValue={field.value?.toString()}
+											value={field.value?.toString()}
 										>
 											<FormControl>
 												<SelectTrigger>
@@ -204,6 +202,7 @@ export function ExpenseFormModal({ open, mode, defaultValues, onClose, onSubmit 
 										<Select
 											onValueChange={(value) => field.onChange(Number(value))}
 											defaultValue={field.value?.toString()}
+											value={field.value?.toString()}
 										>
 											<FormControl>
 												<SelectTrigger>
