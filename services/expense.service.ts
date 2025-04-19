@@ -1,6 +1,5 @@
 "use server"
 
-import { PostgrestFilterBuilder } from "@supabase/supabase-js"
 import { ExpenseFilter } from "@/app/(main)/dashboard/expenses/_components/filter-component"
 import supabase from "@/db/supabase.client"
 import { CreateExpenseCommand, ExpenseDTO, UpdateExpenseCommand } from "@/types/types"
@@ -19,60 +18,65 @@ export async function getExpenses(
 	const from = (page - 1) * pageSize
 	const to = from + pageSize - 1
 
-	// Build base query for both data and count
-	const baseQuery = () => {
-		let query = supabase.from("expense")
+	// Start with a base query
+	let dataQuery = supabase.from("expense").select()
+	let countQuery = supabase.from("expense").select("*", { count: "exact" })
 
-		// Apply filters if provided
-		if (filter) {
-			// Search filter (search in title and description)
-			if (filter.search) {
-				query = query.or(`title.ilike.%${filter.search}%,description.ilike.%${filter.search}%`)
-			}
-
-			// Date range filters
-			if (filter.date_from) {
-				query = query.gte("date", filter.date_from.toISOString().split("T")[0])
-			}
-			if (filter.date_to) {
-				// Add one day to include the end date fully
-				const nextDay = new Date(filter.date_to)
-				nextDay.setDate(nextDay.getDate() + 1)
-				query = query.lt("date", nextDay.toISOString().split("T")[0])
-			}
-
-			// Amount range filters
-			if (filter.amount_min !== undefined) {
-				query = query.gte("amount", filter.amount_min)
-			}
-			if (filter.amount_max !== undefined) {
-				query = query.lte("amount", filter.amount_max)
-			}
-
-			// Category and source filters
-			if (filter.category_id) {
-				query = query.eq("category_id", filter.category_id)
-			}
-			if (filter.source_id) {
-				query = query.eq("source_id", filter.source_id)
-			}
+	// Apply filters if provided
+	if (filter) {
+		// Search filter (search in title and description)
+		if (filter.search) {
+			const searchCondition = `title.ilike.%${filter.search}%,description.ilike.%${filter.search}%`
+			dataQuery = dataQuery.or(searchCondition)
+			countQuery = countQuery.or(searchCondition)
 		}
 
-		return query
+		// Date range filters
+		if (filter.date_from) {
+			const dateFrom = filter.date_from.toISOString().split("T")[0]
+			dataQuery = dataQuery.gte("date", dateFrom)
+			countQuery = countQuery.gte("date", dateFrom)
+		}
+
+		if (filter.date_to) {
+			// Add one day to include the end date fully
+			const nextDay = new Date(filter.date_to)
+			nextDay.setDate(nextDay.getDate() + 1)
+			const dateTo = nextDay.toISOString().split("T")[0]
+			dataQuery = dataQuery.lt("date", dateTo)
+			countQuery = countQuery.lt("date", dateTo)
+		}
+
+		// Amount range filters
+		if (filter.amount_min !== undefined) {
+			dataQuery = dataQuery.gte("amount", filter.amount_min)
+			countQuery = countQuery.gte("amount", filter.amount_min)
+		}
+
+		if (filter.amount_max !== undefined) {
+			dataQuery = dataQuery.lte("amount", filter.amount_max)
+			countQuery = countQuery.lte("amount", filter.amount_max)
+		}
+
+		// Category and source filters
+		if (filter.category_id) {
+			dataQuery = dataQuery.eq("category_id", filter.category_id)
+			countQuery = countQuery.eq("category_id", filter.category_id)
+		}
+
+		if (filter.source_id) {
+			dataQuery = dataQuery.eq("source_id", filter.source_id)
+			countQuery = countQuery.eq("source_id", filter.source_id)
+		}
 	}
 
-	// Query for data with pagination
-	const dataQuery = baseQuery()
-		.select("*")
-		.range(from, to)
-		.order(filter?.sort_by || "date", { ascending: filter?.order === "asc" })
-
-	// Query for count
-	const countQuery = baseQuery().select("*", { count: "exact", head: true })
+	// Add pagination and sorting to data query
+	dataQuery = dataQuery.range(from, to).order(filter?.sort_by || "date", { ascending: filter?.order === "asc" })
 
 	// Execute both queries in parallel
 	const [dataResult, countResult] = await Promise.all([dataQuery, countQuery])
 
+	// Handle errors
 	if (dataResult.error) {
 		throw new Error(`Failed to fetch expenses: ${dataResult.error.message}`)
 	}
@@ -81,6 +85,7 @@ export async function getExpenses(
 		throw new Error(`Failed to count expenses: ${countResult.error.message}`)
 	}
 
+	// Return the combined result
 	return {
 		data: dataResult.data || [],
 		count: countResult.count || 0,
