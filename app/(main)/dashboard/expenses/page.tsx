@@ -17,9 +17,10 @@ export default async function ExpensesPage() {
 		order: "desc" as const,
 	}
 
+	// Prefetch the first page of expenses with default filters
 	await queryClient.prefetchQuery({
-		queryKey: ["expenses", defaultFilter],
-		queryFn: () => getExpenses(defaultFilter),
+		queryKey: ["expenses", defaultFilter, 1, 10],
+		queryFn: () => getExpenses(defaultFilter, 1, 10),
 	})
 
 	return (

@@ -2,23 +2,27 @@
 
 import { Plus } from "lucide-react"
 import { useState } from "react"
-import { toast } from "sonner"
 import { ConfirmationModal } from "@/app/(main)/dashboard/expenses/_components/confirmation-modal"
 import { ExpenseFormModal, ExpenseFormValues } from "@/app/(main)/dashboard/expenses/_components/expense-form-modal"
-import { ExpenseTable } from "@/app/(main)/dashboard/expenses/_components/expense-table"
+import { ExpenseTable } from "@/app/(main)/dashboard/expenses/_components/expense-table/expense-table"
 import { Button } from "@/components/ui/button"
-import { getQueryClient } from "@/lib/get-query-client"
-import { createExpense, deleteExpense, updateExpense } from "@/services/expense.service"
+import {
+	DEFAULT_USER_ID,
+	useCreateExpenseMutation,
+	useDeleteExpenseMutation,
+	useUpdateExpenseMutation,
+} from "@/query-options/expense/mutations"
 import { CreateExpenseCommand, ExpenseDTO, UpdateExpenseCommand } from "@/types/types"
 
-export const DEFAULT_USER_ID = "e34f411a-6c4c-46d8-844f-c6f2fcc8b6f6"
-
 export function DashboardExpenseView() {
-	const queryClient = getQueryClient()
 	const [isFormModalOpen, setIsFormModalOpen] = useState(false)
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
 	const [selectedExpense, setSelectedExpense] = useState<ExpenseDTO | null>(null)
 	const [formMode, setFormMode] = useState<"add" | "edit">("add")
+
+	const createMutation = useCreateExpenseMutation()
+	const updateMutation = useUpdateExpenseMutation()
+	const deleteMutation = useDeleteExpenseMutation()
 
 	const handleAddExpense = () => {
 		setFormMode("add")
@@ -38,48 +42,32 @@ export function DashboardExpenseView() {
 	}
 
 	const handleFormSubmit = async (values: ExpenseFormValues) => {
-		try {
-			const formattedValues = {
-				...values,
-				date: values.date.toISOString(),
-			}
-
-			if (formMode === "add") {
-				const createCommand: CreateExpenseCommand = {
-					...formattedValues,
-					user_id: DEFAULT_USER_ID,
-				}
-				await createExpense(createCommand)
-			} else if (selectedExpense) {
-				const updateCommand: UpdateExpenseCommand = {
-					...formattedValues,
-					id: selectedExpense.id,
-				}
-				await updateExpense(updateCommand)
-			}
-
-			await queryClient.invalidateQueries({ queryKey: ["expenses"] })
-
-			toast.success(`Expense ${formMode === "add" ? "added" : "updated"} successfully`)
-			setIsFormModalOpen(false)
-		} catch {
-			toast.error("Failed to save expense. Please try again.")
+		const formattedValues = {
+			...values,
+			date: values.date.toISOString(),
 		}
+
+		if (formMode === "add") {
+			const createCommand: CreateExpenseCommand = {
+				...formattedValues,
+				user_id: DEFAULT_USER_ID,
+			}
+			createMutation.mutate(createCommand)
+		} else if (selectedExpense) {
+			const updateCommand: UpdateExpenseCommand = {
+				...formattedValues,
+				id: selectedExpense.id,
+			}
+			updateMutation.mutate(updateCommand)
+		}
+
+		setIsFormModalOpen(false)
 	}
 
 	const handleDeleteConfirm = async () => {
 		if (!selectedExpense) return
-
-		try {
-			await deleteExpense(selectedExpense.id)
-
-			await queryClient.invalidateQueries({ queryKey: ["expenses"] })
-
-			toast.success("Expense deleted successfully")
-			setIsDeleteModalOpen(false)
-		} catch {
-			toast.error("Failed to delete expense. Please try again.")
-		}
+		deleteMutation.mutate(selectedExpense.id)
+		setIsDeleteModalOpen(false)
 	}
 
 	return (
