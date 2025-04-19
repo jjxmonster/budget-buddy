@@ -5,6 +5,7 @@ Frontend
 - Typescript 5 for static typing of the code
 - Tailwind 4 allows for convenient styling of the application
 - Shadcn/ui provides a library of accessible React components on which we base the UI
+- Tanstack React Query for client data fetching
 
 Backend - Supabase as a Comprehensive Backend Solution:
 
