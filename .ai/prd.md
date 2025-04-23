@@ -117,24 +117,19 @@ Users often have difficulty tracking their expenses and analyzing financial data
    - The feedback data can be analyzed to improve the AI assistant's accuracy.
 
 9. ID: US-009  
-   Title: Authentication and Secure Access  
-   Description: As a user, I want to log into the system to ensure secure access to my data.  
+   Title: Secure Access and Authentication  
+   Description: As a user, I want to be able to register and log in to the system in a way that ensures the security of my data.  
    Acceptance Criteria:
 
-   - The system requires logging in with unique credentials (e.g., email and password).
-   - After logging in, the user has access only to their own data.
-   - The login process is secure.
-
-10. ID: US-010  
-    Title: User Registration  
-    Description: As a new user, I want to register in the system to gain personalized access to my data.  
-    Acceptance Criteria:
-    - The registration form includes fields for email, password, and password confirmation.
-    - The email must be in the correct format.
-    - The password must meet minimum complexity requirements (e.g., minimum length, combination of letters and numbers).
-    - The password confirmation must match the password.
-    - After successful registration, the user is automatically logged in or redirected to the login page.
-    - Optional email verification as an additional step to confirm registration.
+   - Login and registration take place on dedicated pages.
+   - Login requires providing an email address and password.
+   - User does not have access to /dashboard/\* routes without being logged in.
+   - User has access to the landing page (home page) without being logged in.
+   - Registration requires providing an email address, password, and password confirmation.
+   - User can log in to the system via a button in the top right corner.
+   - User can log out of the system via a button in the top right corner in the dashboard layout.
+   - We do not use external login services (e.g., Google, GitHub).
+   - Password recovery should be possible.
 
 ## 6. Success Metrics
 
