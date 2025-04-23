@@ -6,12 +6,7 @@ import { ConfirmationModal } from "@/app/(main)/dashboard/expenses/_components/c
 import { ExpenseFormModal, ExpenseFormValues } from "@/app/(main)/dashboard/expenses/_components/expense-form-modal"
 import { ExpenseTable } from "@/app/(main)/dashboard/expenses/_components/expense-table/expense-table"
 import { Button } from "@/components/ui/button"
-import {
-	DEFAULT_USER_ID,
-	useCreateExpenseMutation,
-	useDeleteExpenseMutation,
-	useUpdateExpenseMutation,
-} from "@/query-options/expense/mutations"
+import { DEFAULT_USER_ID, useExpenseMutations } from "@/query-options/expense/mutations"
 import { CreateExpenseCommand, ExpenseDTO, UpdateExpenseCommand } from "@/types/types"
 
 export function DashboardExpenseView() {
@@ -20,9 +15,7 @@ export function DashboardExpenseView() {
 	const [selectedExpense, setSelectedExpense] = useState<ExpenseDTO | null>(null)
 	const [formMode, setFormMode] = useState<"add" | "edit">("add")
 
-	const createMutation = useCreateExpenseMutation()
-	const updateMutation = useUpdateExpenseMutation()
-	const deleteMutation = useDeleteExpenseMutation()
+	const { createMutation, updateMutation, deleteMutation } = useExpenseMutations()
 
 	const handleAddExpense = () => {
 		setFormMode("add")

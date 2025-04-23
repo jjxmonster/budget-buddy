@@ -1,7 +1,7 @@
 "use server"
 
 import supabase from "@/db/supabase.client"
-import { CategoryDTO } from "@/types/types"
+import { CategoryDTO, CreateCategoryCommand, UpdateCategoryCommand } from "@/types/types"
 
 export async function getCategories(): Promise<CategoryDTO[]> {
 	const { data, error } = await supabase.from("category").select("*")
@@ -13,8 +13,8 @@ export async function getCategories(): Promise<CategoryDTO[]> {
 	return data
 }
 
-export async function createCategory(category: CategoryDTO): Promise<CategoryDTO> {
-	const { data, error } = await supabase.from("category").insert(category).select().single()
+export async function createCategory(command: CreateCategoryCommand): Promise<CategoryDTO> {
+	const { data, error } = await supabase.from("category").insert(command).select().single()
 
 	if (error) {
 		throw new Error(error.message)
@@ -23,8 +23,8 @@ export async function createCategory(category: CategoryDTO): Promise<CategoryDTO
 	return data
 }
 
-export async function updateCategory(category: CategoryDTO): Promise<CategoryDTO> {
-	const { data, error } = await supabase.from("category").update(category).eq("id", category.id).select().single()
+export async function updateCategory(command: UpdateCategoryCommand): Promise<CategoryDTO> {
+	const { data, error } = await supabase.from("category").update(command).eq("id", command.id).select().single()
 
 	if (error) {
 		throw new Error(error.message)
