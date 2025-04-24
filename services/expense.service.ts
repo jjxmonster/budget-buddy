@@ -1,7 +1,7 @@
 "use server"
 
 import { ExpenseFilter } from "@/app/(main)/dashboard/expenses/_components/filter-component"
-import supabase from "@/db/supabase.client"
+import { createClient } from "@/db/supabase.client"
 import { CreateExpenseCommand, ExpenseDTO, UpdateExpenseCommand } from "@/types/types"
 
 export interface PaginatedResult<T> {
@@ -14,6 +14,7 @@ export async function getExpenses(
 	page: number = 1,
 	pageSize: number = 10
 ): Promise<PaginatedResult<ExpenseDTO>> {
+	const supabase = await createClient()
 	// Calculate range
 	const from = (page - 1) * pageSize
 	const to = from + pageSize - 1
@@ -93,6 +94,7 @@ export async function getExpenses(
 }
 
 export async function createExpense(command: CreateExpenseCommand): Promise<ExpenseDTO> {
+	const supabase = await createClient()
 	const { data, error } = await supabase.from("expense").insert(command).select().single()
 
 	if (error) {
@@ -103,6 +105,7 @@ export async function createExpense(command: CreateExpenseCommand): Promise<Expe
 }
 
 export async function updateExpense(command: UpdateExpenseCommand): Promise<ExpenseDTO> {
+	const supabase = await createClient()
 	const { data, error } = await supabase.from("expense").update(command).eq("id", command.id).select().single()
 
 	if (error) {
@@ -113,6 +116,7 @@ export async function updateExpense(command: UpdateExpenseCommand): Promise<Expe
 }
 
 export async function deleteExpense(id: number): Promise<void> {
+	const supabase = await createClient()
 	const { error } = await supabase.from("expense").delete().eq("id", id)
 
 	if (error) {

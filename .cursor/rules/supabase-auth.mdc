@@ -7,13 +7,22 @@ alwaysApply: false
 
 This guide demonstrates how to implement authentication (sign-up & sign-in) in Next.js 14+ applications using Server Actions and the App Router architecture.
 
+## Before we start
+
+VERY IMPORTANT: Ask me which pages or components should behave differently after introducing authentication. Adjust further steps accordingly.
+
 ## Core Requirements
 
 1. Use `@supabase/ssr` and `@supabase/supabase-js` packages
 2. Implement Server Actions for authentication flows
-3. Use proper middleware for route protection
-4. Handle server-side session management
-5. Implement proper client-side auth state updates
+3. Use ONLY `getAll` and `setAll` for cookie management
+4. NEVER use individual `get`, `set`, or `remove` cookie methods
+5. Use proper middleware for route protection
+6. Handle server-side session management
+7. Implement proper client-side auth state updates
+8. Use `@supabase/ssr` package (NOT auth-helpers)
+. Implement proper session management with middleware based on JWT (Supabase Auth)
+
 
 ## Installation
 
@@ -45,38 +54,34 @@ export type Database = {
 Create `utils/supabase/server.ts`:
 
 ```typescript
-import { createServerClient, type CookieOptions } from "@supabase/ssr"
-import { cookies } from "next/headers"
-import { Database } from "@/types/supabase"
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
 
-export function createClient() {
-	const cookieStore = cookies()
+export async function createClient() {
+  const cookieStore = await cookies()
 
-	return createServerClient<Database>(
-		process.env.NEXT_PUBLIC_SUPABASE_URL!,
-		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-		{
-			cookies: {
-				get(name: string) {
-					return cookieStore.get(name)?.value
-				},
-				set(name: string, value: string, options: CookieOptions) {
-					try {
-						cookieStore.set({ name, value, ...options })
-					} catch (error) {
-						// Handle cookie errors
-					}
-				},
-				remove(name: string, options: CookieOptions) {
-					try {
-						cookieStore.set({ name, value: "", ...options })
-					} catch (error) {
-						// Handle cookie errors
-					}
-				},
-			},
-		}
-	)
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            )
+          } catch {
+            // The `setAll` method was called from a Server Component.
+            // This can be ignored if you have middleware refreshing
+            // user sessions.
+          }
+        },
+      },
+    }
+  )
 }
 ```
 
@@ -99,131 +104,154 @@ export function createClient() {
 Create `middleware.ts` in the root directory:
 
 ```typescript
-import { createServerClient, type CookieOptions } from "@supabase/ssr"
-import { NextResponse, type NextRequest } from "next/server"
+import { type NextRequest } from 'next/server'
+import { updateSession } from '@/utils/supabase/middleware'
 
 export async function middleware(request: NextRequest) {
-	const response = NextResponse.next()
-
-	const supabase = createServerClient(
-		process.env.NEXT_PUBLIC_SUPABASE_URL!,
-		process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-		{
-			cookies: {
-				get(name: string) {
-					return request.cookies.get(name)?.value
-				},
-				set(name: string, value: string, options: CookieOptions) {
-					request.cookies.set({
-						name,
-						value,
-						...options,
-					})
-					response.cookies.set({
-						name,
-						value,
-						...options,
-					})
-				},
-				remove(name: string, options: CookieOptions) {
-					request.cookies.set({
-						name,
-						value: "",
-						...options,
-					})
-					response.cookies.set({
-						name,
-						value: "",
-						...options,
-					})
-				},
-			},
-		}
-	)
-
-	const {
-		data: { session },
-	} = await supabase.auth.getSession()
-
-	// Protected routes - adjust according to your needs
-	const protectedRoutes = ["/dashboard", "/profile"]
-	const isProtectedRoute = protectedRoutes.some((route) => request.nextUrl.pathname.startsWith(route))
-
-	if (isProtectedRoute && !session) {
-		return NextResponse.redirect(new URL("/auth/login", request.url))
-	}
-
-	return response
+  return await updateSession(request)
 }
 
 export const config = {
-	matcher: [
-		/*
-		 * Match all request paths except:
-		 * - _next/static (static files)
-		 * - _next/image (image optimization files)
-		 * - favicon.ico (favicon file)
-		 * - public folder
-		 */
-		"/((?!_next/static|_next/image|favicon.ico|public/).*)",
-	],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * Feel free to modify this pattern to include more paths.
+     */
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 }
 ```
 
-### 3. Implement Server Actions
+### 3. Create a middleware updateSession 
 
-Create `app/actions/auth.ts`:
+Create `utils/supabase/middleware.tsx`
 
 ```typescript
-"use server"
+import { createServerClient } from '@supabase/ssr'
+import { NextResponse, type NextRequest } from 'next/server'
 
-import { createClient } from "@/utils/supabase/server"
-import { redirect } from "next/navigation"
-import { revalidatePath } from "next/cache"
+export async function updateSession(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({
+    request,
+  })
 
-export async function signIn(formData: FormData) {
-	const supabase = createClient()
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value))
+          supabaseResponse = NextResponse.next({
+            request,
+          })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          )
+        },
+      },
+    }
+  )
 
-	const { error } = await supabase.auth.signInWithPassword({
-		email: formData.get("email") as string,
-		password: formData.get("password") as string,
-	})
+  // Do not run code between createServerClient and
+  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
+  // issues with users being randomly logged out.
 
-	if (error) {
-		return { error: error.message }
-	}
+  // IMPORTANT: DO NOT REMOVE auth.getUser()
 
-	revalidatePath("/", "layout")
-	redirect("/dashboard")
-}
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-export async function signUp(formData: FormData) {
-	const supabase = createClient()
+  if (
+    !user &&
+    !request.nextUrl.pathname.startsWith('/login') &&
+    !request.nextUrl.pathname.startsWith('/auth')
+  ) {
+    // no user, potentially respond by redirecting the user to the login page
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    return NextResponse.redirect(url)
+  }
 
-	const { error } = await supabase.auth.signUp({
-		email: formData.get("email") as string,
-		password: formData.get("password") as string,
-		options: {
-			emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
-		},
-	})
+  // IMPORTANT: You *must* return the supabaseResponse object as it is.
+  // If you're creating a new response object with NextResponse.next() make sure to:
+  // 1. Pass the request in it, like so:
+  //    const myNewResponse = NextResponse.next({ request })
+  // 2. Copy over the cookies, like so:
+  //    myNewResponse.cookies.setAll(supabaseResponse.cookies.getAll())
+  // 3. Change the myNewResponse object to fit your needs, but avoid changing
+  //    the cookies!
+  // 4. Finally:
+  //    return myNewResponse
+  // If this is not done, you may be causing the browser and server to go out
+  // of sync and terminate the user's session prematurely!
 
-	if (error) {
-		return { error: error.message }
-	}
-
-	return { message: "Check your email to confirm your account" }
-}
-
-export async function signOut() {
-	const supabase = createClient()
-	await supabase.auth.signOut()
-	revalidatePath("/", "layout")
-	redirect("/auth/login")
+  return supabaseResponse
 }
 ```
 
-### 4. Create Auth Components
+
+### 4. Implement Server Actions
+
+Create `app/login/actions.ts`:
+
+```typescript
+'use server'
+
+import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
+
+import { createClient } from '@/utils/supabase/server'
+
+export async function login(formData: FormData) {
+  const supabase = await createClient()
+
+  // type-casting here for convenience
+  // in practice, you should validate your inputs
+  const data = {
+    email: formData.get('email') as string,
+    password: formData.get('password') as string,
+  }
+
+  const { error } = await supabase.auth.signInWithPassword(data)
+
+  if (error) {
+    redirect('/error')
+  }
+
+  revalidatePath('/', 'layout')
+  redirect('/')
+}
+
+export async function signup(formData: FormData) {
+  const supabase = await createClient()
+
+  // type-casting here for convenience
+  // in practice, you should validate your inputs
+  const data = {
+    email: formData.get('email') as string,
+    password: formData.get('password') as string,
+  }
+
+  const { error } = await supabase.auth.signUp(data)
+
+  if (error) {
+    redirect('/error')
+  }
+
+  revalidatePath('/', 'layout')
+  redirect('/')
+}
+```
+
+### 5. Create Auth Components
 
 Create `app/auth/login/page.tsx`:
 
@@ -251,7 +279,7 @@ export default function LoginPage() {
 }
 ```
 
-### 5. Implement Auth Provider
+### 6. Implement Auth Provider
 
 Create `components/providers/supabase-provider.tsx`:
 
@@ -352,25 +380,21 @@ export default function RootLayout({
 
 ## Route Protection Example
 
-For protected routes, create a higher-order component:
+For protected routes
 
 ```typescript
-// app/dashboard/layout.tsx
-import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 
-export default async function ProtectedLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const supabase = createClient()
-  const { data: { session } } = await supabase.auth.getSession()
+import { createClient } from '@/utils/supabase/server'
 
-  if (!session) {
-    redirect('/auth/login')
+export default async function PrivatePage() {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase.auth.getUser()
+  if (error || !data?.user) {
+    redirect('/login')
   }
 
-  return <>{children}</>
+  return <p>Hello {data.user.email}</p>
 }
 ```
