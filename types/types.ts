@@ -3,6 +3,7 @@
  * These types are built on top of the Database types defined in db/database.types.ts.
  */
 
+import { Tables } from "@/db/database.types"
 import type { Database } from "../db/database.types"
 
 /**
@@ -20,26 +21,32 @@ export type UpdateExpenseCommand = { id: number } & Omit<Database["public"]["Tab
 /**
  * Category DTO and Command Models
  */
-export type CategoryDTO = Database["public"]["Tables"]["category"]["Row"]
+export type CategoryDTO = Tables<"category">
 
-export type CreateCategoryCommand = Omit<
-	Database["public"]["Tables"]["category"]["Insert"],
-	"id" | "created_at" | "updated_at"
->
+export interface CreateCategoryCommand {
+	name: string
+	user_id: string
+}
 
-export type UpdateCategoryCommand = { id: number } & Omit<Database["public"]["Tables"]["category"]["Update"], "id">
+export interface UpdateCategoryCommand {
+	id: number
+	name: string
+}
 
 /**
  * Source DTO and Command Models
  */
-export type SourceDTO = Database["public"]["Tables"]["source"]["Row"]
+export type SourceDTO = Tables<"source">
 
-export type CreateSourceCommand = Omit<
-	Database["public"]["Tables"]["source"]["Insert"],
-	"id" | "created_at" | "updated_at"
->
+export interface CreateSourceCommand {
+	name: string
+	user_id: string
+}
 
-export type UpdateSourceCommand = { id: number } & Omit<Database["public"]["Tables"]["source"]["Update"], "id">
+export interface UpdateSourceCommand {
+	id: number
+	name: string
+}
 
 /**
  * Feedback DTO and Command Models
