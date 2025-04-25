@@ -21,8 +21,8 @@ import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { cn } from "@/lib/utils"
 import { ExpenseDTO } from "@/types/types"
+import { cn } from "@/utils/helpers"
 
 const formSchema = z.object({
 	title: z.string().min(1, "Title is required").max(50, "Title cannot exceed 50 characters"),

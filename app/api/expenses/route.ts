@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 import { DEFAULT_USER_ID } from "@/db/supabase.client"
 import { createExpense, getExpenses } from "@/services/expense.service"
-import { CreateExpenseCommand, ExpenseDTO } from "@/types/types"
+import { CreateExpenseCommand } from "@/types/types"
 import {
 	STATUS_BAD_REQUEST,
 	STATUS_CREATED,

@@ -1,7 +1,7 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query"
 import { Metadata } from "next"
-import { getQueryClient } from "@/lib/get-query-client"
 import { getCategories } from "@/services/category.service"
+import { getQueryClient } from "@/utils/get-query-client"
 import { CategoryList } from "./_components/category-list"
 
 export const metadata: Metadata = {
