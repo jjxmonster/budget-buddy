@@ -1,8 +1,8 @@
 "use client"
 
 import { TableCell, TableRow } from "@/components/ui/table"
-import { formatDate } from "@/lib/utils"
 import { ExpenseDTO } from "@/types/types"
+import { formatDate } from "@/utils/helpers"
 import { ExpenseTableActions } from "./expense-table-actions"
 
 export function formatApiValue(value: string | number | null) {

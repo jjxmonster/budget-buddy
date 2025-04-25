@@ -2,10 +2,9 @@
 
 import { AuthError } from "@supabase/supabase-js"
 import { revalidatePath } from "next/cache"
-import { isRedirectError } from "next/dist/client/components/redirect-error"
 import { redirect } from "next/navigation"
 import { createClient } from "@/db/supabase.client"
-import { loginSchema } from "@/utils/validations/auth"
+import { loginSchema } from "@/lib/validations/auth"
 
 export async function login(formData: FormData) {
 	const supabase = await createClient()

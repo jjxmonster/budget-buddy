@@ -10,7 +10,7 @@ import { AuthForm } from "@/components/auth/auth-form"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { type LoginFormData, loginSchema } from "@/utils/validations/auth"
+import { type LoginFormData, loginSchema } from "@/lib/validations/auth"
 import { login } from "../actions"
 
 export function LoginForm() {
