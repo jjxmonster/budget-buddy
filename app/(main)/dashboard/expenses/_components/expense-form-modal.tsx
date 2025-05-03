@@ -1,6 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useQuery } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { Calendar as CalendarIcon } from "lucide-react"
 import { useEffect } from "react"
@@ -21,6 +22,8 @@ import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { getCategories } from "@/services/category.service"
+import { getSources } from "@/services/source.service"
 import { ExpenseDTO } from "@/types/types"
 import { cn } from "@/utils/helpers"
 
@@ -49,6 +52,17 @@ export function ExpenseFormModal({ open, mode, defaultValues, onClose, onSubmit 
 	const form = useForm<ExpenseFormValues>({
 		resolver: zodResolver(formSchema),
 	})
+	const { data: categories = [], isLoading: isCategoriesLoading } = useQuery({
+		queryKey: ["categories"],
+		queryFn: getCategories,
+	})
+
+	const { data: sources = [], isLoading: isSourcesLoading } = useQuery({
+		queryKey: ["sources"],
+		queryFn: getSources,
+	})
+
+	const isLoading = isCategoriesLoading || isSourcesLoading
 
 	useEffect(() => {
 		if (open) {
@@ -63,28 +77,24 @@ export function ExpenseFormModal({ open, mode, defaultValues, onClose, onSubmit 
 		}
 	}, [form, defaultValues, open])
 
-	const categories = [
-		{ id: 1, name: "Food" },
-		{ id: 2, name: "Transport" },
-		{ id: 3, name: "Entertainment" },
-	]
-
-	const sources = [
-		{ id: 1, name: "Cash" },
-		{ id: 2, name: "Credit Card" },
-		{ id: 3, name: "Bank Transfer" },
-	]
+	if (isLoading) {
+		return <>loading...</>
+	}
 
 	return (
 		<Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-			<DialogContent className="sm:max-w-[425px]">
+			<DialogContent className="sm:max-w-[425px]" data-testid="expense-form-modal">
 				<DialogHeader>
 					<DialogTitle>{mode === "add" ? "Add Expense" : "Edit Expense"}</DialogTitle>
 					<DialogDescription>Fill in the details of your expense. Click save when you're done.</DialogDescription>
 				</DialogHeader>
 
 				<Form {...form}>
-					<form onSubmit={form.handleSubmit((values) => onSubmit(values))} className="space-y-4">
+					<form
+						onSubmit={form.handleSubmit((values) => onSubmit(values))}
+						className="space-y-4"
+						data-testid="expense-form"
+					>
 						<FormField
 							control={form.control}
 							name="title"
@@ -92,7 +102,7 @@ export function ExpenseFormModal({ open, mode, defaultValues, onClose, onSubmit 
 								<FormItem>
 									<FormLabel>Title</FormLabel>
 									<FormControl>
-										<Input placeholder="Expense title" {...field} />
+										<Input placeholder="Expense title" {...field} data-testid="expense-title-input" />
 									</FormControl>
 									<FormMessage />
 								</FormItem>
@@ -106,7 +116,12 @@ export function ExpenseFormModal({ open, mode, defaultValues, onClose, onSubmit 
 								<FormItem>
 									<FormLabel>Description</FormLabel>
 									<FormControl>
-										<Textarea placeholder="Optional description" {...field} value={field.value || ""} />
+										<Textarea
+											placeholder="Optional description"
+											{...field}
+											value={field.value || ""}
+											data-testid="expense-description-input"
+										/>
 									</FormControl>
 									<FormDescription>Max 200 characters</FormDescription>
 									<FormMessage />
@@ -126,6 +141,7 @@ export function ExpenseFormModal({ open, mode, defaultValues, onClose, onSubmit 
 												<Button
 													variant={"outline"}
 													className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
+													data-testid="expense-date-picker"
 												>
 													{field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
 													<CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
@@ -156,6 +172,7 @@ export function ExpenseFormModal({ open, mode, defaultValues, onClose, onSubmit 
 											onChange={(e) => {
 												field.onChange(e.target.valueAsNumber)
 											}}
+											data-testid="expense-amount-input"
 										/>
 									</FormControl>
 									<FormMessage />
@@ -176,7 +193,7 @@ export function ExpenseFormModal({ open, mode, defaultValues, onClose, onSubmit 
 											value={field.value?.toString()}
 										>
 											<FormControl>
-												<SelectTrigger>
+												<SelectTrigger data-testid="expense-category-select">
 													<SelectValue placeholder="Select category" />
 												</SelectTrigger>
 											</FormControl>
@@ -205,7 +222,7 @@ export function ExpenseFormModal({ open, mode, defaultValues, onClose, onSubmit 
 											value={field.value?.toString()}
 										>
 											<FormControl>
-												<SelectTrigger>
+												<SelectTrigger data-testid="expense-source-select">
 													<SelectValue placeholder="Select source" />
 												</SelectTrigger>
 											</FormControl>
@@ -224,10 +241,12 @@ export function ExpenseFormModal({ open, mode, defaultValues, onClose, onSubmit 
 						</div>
 
 						<DialogFooter>
-							<Button type="button" variant="outline" onClick={onClose}>
+							<Button type="button" variant="outline" onClick={onClose} data-testid="expense-cancel-button">
 								Cancel
 							</Button>
-							<Button type="submit">{mode === "add" ? "Add" : "Save"}</Button>
+							<Button type="submit" data-testid="expense-submit-button">
+								{mode === "add" ? "Add" : "Save"}
+							</Button>
 						</DialogFooter>
 					</form>
 				</Form>

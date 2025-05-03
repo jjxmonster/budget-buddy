@@ -75,7 +75,14 @@ export function LoginForm() {
 						render={({ field }) => (
 							<FormItem>
 								<FormControl>
-									<Input {...field} type="email" placeholder="Email" autoComplete="email" autoFocus />
+									<Input
+										data-testid="auth-input-email"
+										{...field}
+										type="email"
+										placeholder="Email"
+										autoComplete="email"
+										autoFocus
+									/>
 								</FormControl>
 								<FormMessage />
 							</FormItem>
@@ -87,7 +94,13 @@ export function LoginForm() {
 						render={({ field }) => (
 							<FormItem>
 								<FormControl>
-									<Input {...field} type="password" placeholder="Password" autoComplete="current-password" />
+									<Input
+										data-testid="auth-input-password"
+										{...field}
+										type="password"
+										placeholder="Password"
+										autoComplete="current-password"
+									/>
 								</FormControl>
 								<FormMessage />
 							</FormItem>

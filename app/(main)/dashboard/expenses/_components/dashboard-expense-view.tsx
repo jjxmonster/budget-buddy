@@ -67,7 +67,7 @@ export function DashboardExpenseView() {
 		<div className="space-y-6">
 			<div className="flex items-center justify-between">
 				<h1 className="text-3xl font-bold">Expenses</h1>
-				<Button onClick={handleAddExpense}>
+				<Button onClick={handleAddExpense} data-testid="add-expense-button">
 					<Plus className="mr-2 h-4 w-4" />
 					Add Expense
 				</Button>

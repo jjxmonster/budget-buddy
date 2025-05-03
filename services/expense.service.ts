@@ -20,7 +20,11 @@ export async function getExpenses(
 	const to = from + pageSize - 1
 
 	// Start with a base query
-	let dataQuery = supabase.from("expense").select()
+	let dataQuery = supabase.from("expense").select(`
+			*,
+			category:category_id(name, id),
+			source:source_id(name, id)
+		`)
 	let countQuery = supabase.from("expense").select("*", { count: "exact" })
 
 	// Apply filters if provided

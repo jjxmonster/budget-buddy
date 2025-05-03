@@ -9,7 +9,10 @@ import type { Database } from "../db/database.types"
 /**
  * Expense DTO and Command Models
  */
-export type ExpenseDTO = Database["public"]["Tables"]["expense"]["Row"]
+export type ExpenseDTO = Database["public"]["Tables"]["expense"]["Row"] & {
+	category: CategoryDTO | null
+	source: SourceDTO | null
+}
 
 export type CreateExpenseCommand = Omit<
 	Database["public"]["Tables"]["expense"]["Insert"],
