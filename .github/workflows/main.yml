@@ -1,0 +1,100 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    env:
+      NODE_VERSION: 22
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linting
+        run: npm run lint
+
+  e2e-tests:
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    env:
+      E2E_USER_ID: ${{ secrets.E2E_USER_ID }}
+      E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
+      E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Setup environment for E2E tests
+        run: |
+          echo "Creating .env.test file for E2E tests"
+          touch .env.test
+          echo "E2E_USER_ID=$E2E_USER_ID" >> .env.test
+          echo "E2E_USERNAME=$E2E_USERNAME" >> .env.test
+          echo "E2E_PASSWORD=$E2E_PASSWORD" >> .env.test
+          echo "SUPABASE_URL=$SUPABASE_URL" >> .env.test
+          echo "SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY" >> .env.test
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+
+      - name: Archive test reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-test-reports
+          path: |
+            playwright-report/
+            test-results/
+
+  build:
+    needs: [lint-and-test, e2e-tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production version
+        run: npm run build
+
+      - name: Archive build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: .next/
+          retention-days: 7

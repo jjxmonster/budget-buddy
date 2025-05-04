@@ -18,3 +18,7 @@ AI - Communication with models through the Openrouter.ai service:
 
 - Access to a wide range of models (OpenAI, Anthropic, Google, and many others), which allows us to find a solution that provides high efficiency and low costs
 - Allows setting financial limits on API keys
+
+Tests
+
+- E2E Tests with Playwright
