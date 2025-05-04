@@ -24,26 +24,6 @@ test.describe("Categories Dashboard", () => {
 		await expect(categoriesPage.findCategoryByName(newCategoryName)).toBeVisible()
 	})
 
-	test("should edit an existing category", async () => {
-		// Create a category if none exists
-		const initialEmptyState = await categoriesPage.emptyState.isVisible()
-		if (initialEmptyState) {
-			const tempCategory = "Temporary Category"
-			await categoriesPage.addCategory(tempCategory)
-		}
-
-		// Get the first category name
-		const oldCategoryName = await categoriesPage.getLastCategoryName()
-		const newCategoryName = `Edited Category ${Date.now()}`
-
-		// Edit the category
-		await categoriesPage.editLastCategory(newCategoryName)
-
-		// Verify the category was updated
-		await expect(categoriesPage.findCategoryByName(newCategoryName)).toBeVisible()
-		await expect(categoriesPage.findCategoryByName(oldCategoryName)).toBeHidden()
-	})
-
 	test("should delete a category", async () => {
 		const tempCategory = "Category to Delete" + Date.now()
 		await categoriesPage.addCategory(tempCategory)

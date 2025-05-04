@@ -1,16 +1,23 @@
-import { expect, test } from "@playwright/test"
+import { test } from "@playwright/test"
 import { CategoriesPage } from "../page-objects/categories-page"
 import { ExpensesPage } from "../page-objects/expenses-page"
+import { SourcesPage } from "../page-objects/sources-page"
 
 test.describe("Expenses Dashboard", () => {
 	let expensesPage: ExpensesPage
 	let categoryName: string
+	let sourceName: string
 
 	test.beforeEach(async ({ page }) => {
 		const categoriesPage = new CategoriesPage(page)
 		categoryName = "Food" + Date.now()
 		await categoriesPage.goto()
 		await categoriesPage.addCategory(categoryName)
+
+		const sourcesPage = new SourcesPage(page)
+		await sourcesPage.goto()
+		sourceName = "Revolut" + Date.now()
+		await sourcesPage.addSource(sourceName)
 
 		expensesPage = new ExpensesPage(page)
 		await expensesPage.goto()
@@ -24,7 +31,7 @@ test.describe("Expenses Dashboard", () => {
 			description: "Test description for automated test",
 			amount: 42.5,
 			category: categoryName,
-			source: "Revolut",
+			source: sourceName,
 		}
 
 		// Step 1: Click Add Expense button and verify modal opens
