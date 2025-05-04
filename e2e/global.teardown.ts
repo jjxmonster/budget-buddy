@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js"
 import type { Database } from "@/db/database.types"
 
 const SUPABASE_URL = process.env.SUPABASE_URL
-const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY
+const SUPABASE_KEY = process.env.SUPABASE_KEY
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
 	throw new Error("Missing Supabase environment variables for teardown")
