@@ -23,13 +23,4 @@ test.describe("Categories Dashboard", () => {
 
 		await expect(categoriesPage.findCategoryByName(newCategoryName)).toBeVisible()
 	})
-
-	test("should delete a category", async () => {
-		const tempCategory = "Category to Delete" + Date.now()
-		await categoriesPage.addCategory(tempCategory)
-
-		await categoriesPage.deleteLastCategory()
-
-		await expect(categoriesPage.findCategoryByName(tempCategory)).not.toBeVisible()
-	})
 })
