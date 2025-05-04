@@ -18,13 +18,15 @@ interface ExpenseTableRowProps {
 
 export function ExpenseTableRow({ expense, onEdit, onDelete }: ExpenseTableRowProps) {
 	return (
-		<TableRow>
-			<TableCell>{expense.title}</TableCell>
-			<TableCell>{expense.description || "-"}</TableCell>
-			<TableCell>{formatDate(expense.date)}</TableCell>
-			<TableCell className="text-right">${expense.amount.toFixed(2)}</TableCell>
-			<TableCell>{formatApiValue(expense.category_id)}</TableCell>
-			<TableCell>{formatApiValue(expense.source_id)}</TableCell>
+		<TableRow data-testid={`expense-row-${expense.id}`}>
+			<TableCell data-testid="expense-title">{expense.title}</TableCell>
+			<TableCell data-testid="expense-description">{expense.description || "-"}</TableCell>
+			<TableCell data-testid="expense-date">{formatDate(expense.date)}</TableCell>
+			<TableCell className="text-right" data-testid="expense-amount">
+				${expense.amount.toFixed(2)}
+			</TableCell>
+			<TableCell data-testid="expense-category">{formatApiValue(expense.category?.name || null)}</TableCell>
+			<TableCell data-testid="expense-source">{formatApiValue(expense.source?.name || null)}</TableCell>
 			<TableCell className="text-right">
 				<ExpenseTableActions expense={expense} onEdit={onEdit} onDelete={onDelete} />
 			</TableCell>

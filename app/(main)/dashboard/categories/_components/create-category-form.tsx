@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { DEFAULT_USER_ID, useCategoryMutations } from "@/query-options/category/mutations"
+import { useCategoryMutations } from "@/query-options/category/mutations"
 import { CreateCategoryCommand } from "@/types/types"
 
 interface CreateCategoryFormProps {
@@ -36,23 +36,22 @@ export function CreateCategoryForm({ onSuccess, onCancel }: CreateCategoryFormPr
 	async function onSubmit(values: CategoryFormValues) {
 		const command: CreateCategoryCommand = {
 			...values,
-			user_id: DEFAULT_USER_ID,
 		}
 
-		await createMutation.mutateAsync(command)
+		createMutation.mutate(command)
 		form.reset()
 		onSuccess?.()
 	}
 
 	return (
 		<Dialog open={true} onOpenChange={(open) => !open && onCancel?.()}>
-			<DialogContent className="sm:max-w-[425px]">
+			<DialogContent className="sm:max-w-[425px]" data-testid="create-category-dialog">
 				<DialogHeader>
 					<DialogTitle>Add Category</DialogTitle>
 				</DialogHeader>
 
 				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
+					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2" data-testid="create-category-form">
 						<FormField
 							control={form.control}
 							name="name"
@@ -60,7 +59,7 @@ export function CreateCategoryForm({ onSuccess, onCancel }: CreateCategoryFormPr
 								<FormItem>
 									<FormLabel>Category Name</FormLabel>
 									<FormControl>
-										<Input placeholder="Enter category name" {...field} />
+										<Input placeholder="Enter category name" {...field} data-testid="category-name-input" />
 									</FormControl>
 									<FormMessage />
 								</FormItem>
@@ -68,10 +67,16 @@ export function CreateCategoryForm({ onSuccess, onCancel }: CreateCategoryFormPr
 						/>
 
 						<DialogFooter className="pt-4">
-							<Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+							<Button
+								type="button"
+								variant="outline"
+								onClick={onCancel}
+								disabled={isSubmitting}
+								data-testid="cancel-category-button"
+							>
 								Cancel
 							</Button>
-							<Button type="submit" disabled={isSubmitting}>
+							<Button type="submit" disabled={isSubmitting} data-testid="submit-category-button">
 								{isSubmitting ? "Adding..." : "Add Category"}
 							</Button>
 						</DialogFooter>

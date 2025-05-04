@@ -9,14 +9,20 @@ import type { Database } from "../db/database.types"
 /**
  * Expense DTO and Command Models
  */
-export type ExpenseDTO = Database["public"]["Tables"]["expense"]["Row"]
+export type ExpenseDTO = Database["public"]["Tables"]["expense"]["Row"] & {
+	category: CategoryDTO | null
+	source: SourceDTO | null
+}
 
 export type CreateExpenseCommand = Omit<
 	Database["public"]["Tables"]["expense"]["Insert"],
-	"id" | "created_at" | "updated_at"
+	"id" | "created_at" | "updated_at" | "user_id"
 >
 
-export type UpdateExpenseCommand = { id: number } & Omit<Database["public"]["Tables"]["expense"]["Update"], "id">
+export type UpdateExpenseCommand = { id: number } & Omit<
+	Database["public"]["Tables"]["expense"]["Update"],
+	"id" | "user_id"
+>
 
 /**
  * Category DTO and Command Models
@@ -25,7 +31,6 @@ export type CategoryDTO = Tables<"category">
 
 export interface CreateCategoryCommand {
 	name: string
-	user_id: string
 }
 
 export interface UpdateCategoryCommand {
@@ -40,7 +45,6 @@ export type SourceDTO = Tables<"source">
 
 export interface CreateSourceCommand {
 	name: string
-	user_id: string
 }
 
 export interface UpdateSourceCommand {

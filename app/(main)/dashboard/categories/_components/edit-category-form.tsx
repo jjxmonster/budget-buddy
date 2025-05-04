@@ -42,13 +42,13 @@ export function EditCategoryForm({ category, onSuccess, onCancel }: EditCategory
 
 	const isSubmitting = form.formState.isSubmitting
 
-	async function onSubmit(values: CategoryFormValues) {
+	function onSubmit(values: CategoryFormValues) {
 		const command: UpdateCategoryCommand = {
 			id: category.id,
 			name: values.name,
 		}
 
-		await updateMutation.mutateAsync(command)
+		updateMutation.mutate(command)
 		form.reset()
 		onSuccess?.()
 	}

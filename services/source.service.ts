@@ -5,7 +5,13 @@ import { CreateSourceCommand, SourceDTO, UpdateSourceCommand } from "@/types/typ
 
 export async function getSources(): Promise<SourceDTO[]> {
 	const supabase = await createClient()
-	const { data, error } = await supabase.from("source").select("*")
+	const { error: sessionError, data: user } = await supabase.auth.getUser()
+
+	if (sessionError) {
+		throw new Error(sessionError.message)
+	}
+
+	const { data, error } = await supabase.from("source").select("*").eq("user_id", user.user?.id)
 
 	if (error) {
 		throw new Error(error.message)
@@ -16,7 +22,16 @@ export async function getSources(): Promise<SourceDTO[]> {
 
 export async function createSource(command: CreateSourceCommand): Promise<SourceDTO> {
 	const supabase = await createClient()
-	const { data, error } = await supabase.from("source").insert(command).select().single()
+	const { error: sessionError, data: user } = await supabase.auth.getUser()
+
+	if (sessionError) {
+		throw new Error(sessionError.message)
+	}
+	const { data, error } = await supabase
+		.from("source")
+		.insert({ ...command, user_id: user.user?.id })
+		.select()
+		.single()
 
 	if (error) {
 		throw new Error(error.message)
@@ -27,7 +42,18 @@ export async function createSource(command: CreateSourceCommand): Promise<Source
 
 export async function updateSource(command: UpdateSourceCommand): Promise<SourceDTO> {
 	const supabase = await createClient()
-	const { data, error } = await supabase.from("source").update(command).eq("id", command.id).select().single()
+	const { error: sessionError, data: user } = await supabase.auth.getUser()
+
+	if (sessionError) {
+		throw new Error(sessionError.message)
+	}
+
+	const { data, error } = await supabase
+		.from("source")
+		.update({ ...command, user_id: user.user?.id })
+		.eq("id", command.id)
+		.select()
+		.single()
 
 	if (error) {
 		throw new Error(error.message)
@@ -38,6 +64,12 @@ export async function updateSource(command: UpdateSourceCommand): Promise<Source
 
 export async function deleteSource(id: number): Promise<void> {
 	const supabase = await createClient()
+	const { error: sessionError } = await supabase.auth.getUser()
+
+	if (sessionError) {
+		throw new Error(sessionError.message)
+	}
+
 	const { error } = await supabase.from("source").delete().eq("id", id)
 
 	if (error) {

@@ -48,7 +48,7 @@ export function EditSourceForm({ source, onSuccess, onCancel }: EditSourceFormPr
 			name: values.name,
 		}
 
-		await updateMutation.mutateAsync(command)
+		updateMutation.mutate(command)
 		form.reset()
 		onSuccess?.()
 	}

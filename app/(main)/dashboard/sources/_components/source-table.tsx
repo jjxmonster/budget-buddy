@@ -58,9 +58,9 @@ export function SourceTable({ sources, isLoading = false, onEdit, onDelete }: So
 						<TableHead className="w-[100px]">Actions</TableHead>
 					</TableRow>
 				</TableHeader>
-				<TableBody>
+				<TableBody data-testid="source-table-body">
 					{sources.map((source) => (
-						<TableRow key={source.id}>
+						<TableRow key={source.id} data-testid={`source-row-${source.id}`}>
 							<TableCell className="font-medium">{source.name}</TableCell>
 							<TableCell>
 								<SourceActions source={source} onEdit={() => onEdit(source)} onDelete={() => onDelete(source)} />

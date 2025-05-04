@@ -5,8 +5,6 @@ import { env } from "@/env.mjs"
 const supabaseUrl = env.SUPABASE_URL
 const supabaseKey = env.SUPABASE_KEY
 
-export const DEFAULT_USER_ID = "e34f411a-6c4c-46d8-844f-c6f2fcc8b6f6"
-
 export async function createClient() {
 	const cookieStore = await cookies()
 

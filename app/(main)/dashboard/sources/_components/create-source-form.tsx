@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { DEFAULT_USER_ID, useSourceMutations } from "@/query-options/source/mutations"
+import { useSourceMutations } from "@/query-options/source/mutations"
 import { CreateSourceCommand } from "@/types/types"
 
 interface CreateSourceFormProps {
@@ -36,23 +36,22 @@ export function CreateSourceForm({ onSuccess, onCancel }: CreateSourceFormProps)
 	async function onSubmit(values: SourceFormValues) {
 		const command: CreateSourceCommand = {
 			...values,
-			user_id: DEFAULT_USER_ID,
 		}
 
-		await createMutation.mutateAsync(command)
+		createMutation.mutate(command)
 		form.reset()
 		onSuccess?.()
 	}
 
 	return (
-		<Dialog open={true} onOpenChange={(open) => !open && onCancel?.()}>
+		<Dialog open={true} onOpenChange={(open) => !open && onCancel?.()} data-testid="create-source-dialog">
 			<DialogContent className="sm:max-w-[425px]">
 				<DialogHeader>
-					<DialogTitle>Add Source</DialogTitle>
+					<DialogTitle data-testid="create-source-dialog-title">Add Source</DialogTitle>
 				</DialogHeader>
 
 				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
+					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2" data-testid="create-source-form">
 						<FormField
 							control={form.control}
 							name="name"
@@ -60,7 +59,7 @@ export function CreateSourceForm({ onSuccess, onCancel }: CreateSourceFormProps)
 								<FormItem>
 									<FormLabel>Source Name</FormLabel>
 									<FormControl>
-										<Input placeholder="Enter source name" {...field} />
+										<Input placeholder="Enter source name" {...field} data-testid="source-name-input" />
 									</FormControl>
 									<FormMessage />
 								</FormItem>
@@ -68,10 +67,16 @@ export function CreateSourceForm({ onSuccess, onCancel }: CreateSourceFormProps)
 						/>
 
 						<DialogFooter className="pt-4">
-							<Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+							<Button
+								type="button"
+								variant="outline"
+								onClick={onCancel}
+								disabled={isSubmitting}
+								data-testid="cancel-source-button"
+							>
 								Cancel
 							</Button>
-							<Button type="submit" disabled={isSubmitting}>
+							<Button type="submit" disabled={isSubmitting} data-testid="submit-source-button">
 								{isSubmitting ? "Adding..." : "Add Source"}
 							</Button>
 						</DialogFooter>

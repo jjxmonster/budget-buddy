@@ -13,10 +13,22 @@ interface SourceActionsProps {
 export function SourceActions({ source, onEdit, onDelete }: SourceActionsProps) {
 	return (
 		<div className="flex items-center gap-2">
-			<Button variant="ghost" size="icon" onClick={onEdit} aria-label={`Edit ${source.name}`}>
+			<Button
+				variant="ghost"
+				size="icon"
+				onClick={onEdit}
+				aria-label={`Edit ${source.name}`}
+				data-testid={`edit-source-${source.id}`}
+			>
 				<Edit className="h-4 w-4" />
 			</Button>
-			<Button variant="ghost" size="icon" onClick={onDelete} aria-label={`Delete ${source.name}`}>
+			<Button
+				variant="ghost"
+				size="icon"
+				onClick={onDelete}
+				aria-label={`Delete ${source.name}`}
+				data-testid={`delete-source-${source.id}`}
+			>
 				<Trash2 className="text-destructive h-4 w-4" />
 			</Button>
 		</div>

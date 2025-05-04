@@ -28,7 +28,7 @@ export function SourceList() {
 		<div className="space-y-4">
 			<div className="flex items-center justify-between">
 				<h1 className="text-3xl font-bold">Sources</h1>
-				<Button onClick={() => setIsCreateDialogOpen(true)}>
+				<Button onClick={() => setIsCreateDialogOpen(true)} data-testid="add-source-button">
 					<Plus className="mr-2 h-4 w-4" />
 					Add Source
 				</Button>
@@ -55,9 +55,9 @@ export function SourceList() {
 				source={sourceToDelete}
 				isOpen={sourceToDelete !== null}
 				onClose={() => setSourceToDelete(null)}
-				onConfirm={async () => {
+				onConfirm={() => {
 					if (sourceToDelete) {
-						await deleteMutation.mutateAsync(sourceToDelete.id)
+						deleteMutation.mutate(sourceToDelete.id)
 						setSourceToDelete(null)
 					}
 				}}

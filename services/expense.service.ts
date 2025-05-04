@@ -1,6 +1,7 @@
 "use server"
 
 import { ExpenseFilter } from "@/app/(main)/dashboard/expenses/_components/filter-component"
+import { Database } from "@/db/database.types"
 import { createClient } from "@/db/supabase.client"
 import { CreateExpenseCommand, ExpenseDTO, UpdateExpenseCommand } from "@/types/types"
 
@@ -15,13 +16,32 @@ export async function getExpenses(
 	pageSize: number = 10
 ): Promise<PaginatedResult<ExpenseDTO>> {
 	const supabase = await createClient()
+	const { error: sessionError, data: user } = await supabase.auth.getUser()
+
+	if (sessionError) {
+		throw new Error(sessionError.message)
+	}
+
 	// Calculate range
 	const from = (page - 1) * pageSize
 	const to = from + pageSize - 1
 
 	// Start with a base query
-	let dataQuery = supabase.from("expense").select()
-	let countQuery = supabase.from("expense").select("*", { count: "exact" })
+	let dataQuery = supabase
+		.from("expense")
+		.select(
+			`
+			*,
+			category:category_id(name, id),
+			source:source_id(name, id)
+		`
+		)
+		.eq("user_id", user.user?.id || "")
+
+	let countQuery = supabase
+		.from("expense")
+		.select("*", { count: "exact" })
+		.eq("user_id", user.user?.id || "")
 
 	// Apply filters if provided
 	if (filter) {
@@ -79,6 +99,7 @@ export async function getExpenses(
 
 	// Handle errors
 	if (dataResult.error) {
+		console.error(dataResult.error)
 		throw new Error(`Failed to fetch expenses: ${dataResult.error.message}`)
 	}
 
@@ -86,16 +107,28 @@ export async function getExpenses(
 		throw new Error(`Failed to count expenses: ${countResult.error.message}`)
 	}
 
-	// Return the combined result
+	// Transform data to ensure type safety
+	const expenses = dataResult.data || []
+
+	// Return the combined result with proper type assertion
 	return {
-		data: dataResult.data || [],
+		data: expenses,
 		count: countResult.count || 0,
 	}
 }
 
 export async function createExpense(command: CreateExpenseCommand): Promise<ExpenseDTO> {
 	const supabase = await createClient()
-	const { data, error } = await supabase.from("expense").insert(command).select().single()
+	const { error: sessionError, data: user } = await supabase.auth.getUser()
+
+	if (sessionError) {
+		throw new Error(sessionError.message)
+	}
+	const { data, error } = await supabase
+		.from("expense")
+		.insert({ ...command, user_id: user.user?.id })
+		.select()
+		.single()
 
 	if (error) {
 		throw new Error("Failed to create expense")
@@ -106,7 +139,17 @@ export async function createExpense(command: CreateExpenseCommand): Promise<Expe
 
 export async function updateExpense(command: UpdateExpenseCommand): Promise<ExpenseDTO> {
 	const supabase = await createClient()
-	const { data, error } = await supabase.from("expense").update(command).eq("id", command.id).select().single()
+	const { error: sessionError, data: user } = await supabase.auth.getUser()
+
+	if (sessionError) {
+		throw new Error(sessionError.message)
+	}
+	const { data, error } = await supabase
+		.from("expense")
+		.update({ ...command, user_id: user.user?.id })
+		.eq("id", command.id)
+		.select()
+		.single()
 
 	if (error) {
 		throw new Error("Failed to update expense")
@@ -117,6 +160,11 @@ export async function updateExpense(command: UpdateExpenseCommand): Promise<Expe
 
 export async function deleteExpense(id: number): Promise<void> {
 	const supabase = await createClient()
+	const { error: sessionError } = await supabase.auth.getUser()
+
+	if (sessionError) {
+		throw new Error(sessionError.message)
+	}
 	const { error } = await supabase.from("expense").delete().eq("id", id)
 
 	if (error) {

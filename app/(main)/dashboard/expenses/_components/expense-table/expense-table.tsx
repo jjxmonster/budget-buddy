@@ -58,7 +58,7 @@ export function ExpenseTable({ onEdit, onDelete }: ExpenseTableProps) {
 	}
 
 	return (
-		<div className="space-y-4">
+		<div className="space-y-4" data-testid="expense-table-container">
 			<FilterComponent onFilterChange={handleFilterChange} />
 
 			<div className="rounded-md border">
@@ -74,7 +74,7 @@ export function ExpenseTable({ onEdit, onDelete }: ExpenseTableProps) {
 							<TableHead className="text-right">Actions</TableHead>
 						</TableRow>
 					</TableHeader>
-					<TableBody>
+					<TableBody data-testid="expense-table-body">
 						{isLoading ? (
 							<ExpensesLoading />
 						) : expenses.length === 0 ? (

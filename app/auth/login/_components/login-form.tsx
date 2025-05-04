@@ -10,6 +10,7 @@ import { AuthForm } from "@/components/auth/auth-form"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { useAuthStore } from "@/lib/store/auth-store"
 import { type LoginFormData, loginSchema } from "@/lib/validations/auth"
 import { login } from "../actions"
 
@@ -21,6 +22,7 @@ export function LoginForm() {
 			password: "",
 		},
 	})
+	const { setUser } = useAuthStore()
 
 	async function onSubmit(data: LoginFormData) {
 		const formData = new FormData()
@@ -29,7 +31,7 @@ export function LoginForm() {
 
 		const result = await login(formData)
 
-		if (result?.error) {
+		if ("error" in result) {
 			toast.error(result.error)
 			if (result.validationErrors) {
 				Object.entries(result.validationErrors).forEach(([key, messages]) => {
@@ -43,6 +45,7 @@ export function LoginForm() {
 			return
 		}
 
+		setUser(result.user)
 		redirect("/dashboard/expenses")
 	}
 
@@ -75,7 +78,14 @@ export function LoginForm() {
 						render={({ field }) => (
 							<FormItem>
 								<FormControl>
-									<Input {...field} type="email" placeholder="Email" autoComplete="email" autoFocus />
+									<Input
+										data-testid="auth-input-email"
+										{...field}
+										type="email"
+										placeholder="Email"
+										autoComplete="email"
+										autoFocus
+									/>
 								</FormControl>
 								<FormMessage />
 							</FormItem>
@@ -87,7 +97,13 @@ export function LoginForm() {
 						render={({ field }) => (
 							<FormItem>
 								<FormControl>
-									<Input {...field} type="password" placeholder="Password" autoComplete="current-password" />
+									<Input
+										data-testid="auth-input-password"
+										{...field}
+										type="password"
+										placeholder="Password"
+										autoComplete="current-password"
+									/>
 								</FormControl>
 								<FormMessage />
 							</FormItem>

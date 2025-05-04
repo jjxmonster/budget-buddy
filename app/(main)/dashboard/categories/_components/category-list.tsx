@@ -27,7 +27,7 @@ export function CategoryList() {
 		queryFn: getCategories,
 	})
 
-	const { createMutation, updateMutation, deleteMutation } = useCategoryMutations()
+	const { deleteMutation } = useCategoryMutations()
 
 	const handleAddCategory = () => {
 		setIsCreateModalOpen(true)
@@ -54,7 +54,7 @@ export function CategoryList() {
 
 	const handleDeleteConfirm = async () => {
 		if (!selectedCategory) return
-		await deleteMutation.mutateAsync(selectedCategory.id)
+		deleteMutation.mutate(selectedCategory.id)
 		setIsDeleteDialogOpen(false)
 		setSelectedCategory(null)
 	}
@@ -64,10 +64,10 @@ export function CategoryList() {
 	}
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-6" data-testid="category-list-container">
 			<div className="flex items-center justify-between">
 				<h1 className="text-3xl font-bold">Categories</h1>
-				<Button onClick={handleAddCategory}>
+				<Button onClick={handleAddCategory} data-testid="add-category-button">
 					<Plus className="mr-2 h-4 w-4" />
 					Add Category
 				</Button>
