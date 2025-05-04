@@ -9,7 +9,7 @@ jobs:
   lint-and-test:
     runs-on: ubuntu-latest
     env:
-      NODE_VERSION: 22
+      NODE_VERSION: 22.14.0
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -17,7 +17,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: ".nvmrc"
+          node-version: "22.14.0"
           cache: "npm"
 
       - name: Install dependencies
@@ -42,7 +42,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: ".nvmrc"
+          node-version: "22.14.0"
           cache: "npm"
 
       - name: Install dependencies
@@ -64,15 +64,6 @@ jobs:
       - name: Run E2E tests
         run: npm run test:e2e
 
-      - name: Archive test reports
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: e2e-test-reports
-          path: |
-            playwright-report/
-            test-results/
-
   build:
     needs: [lint-and-test, e2e-tests]
     runs-on: ubuntu-latest
@@ -83,7 +74,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version-file: ".nvmrc"
+          node-version: "22.14.0"
           cache: "npm"
 
       - name: Install dependencies
