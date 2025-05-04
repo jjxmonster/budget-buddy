@@ -6,7 +6,7 @@ import { ConfirmationModal } from "@/app/(main)/dashboard/expenses/_components/c
 import { ExpenseFormModal, ExpenseFormValues } from "@/app/(main)/dashboard/expenses/_components/expense-form-modal"
 import { ExpenseTable } from "@/app/(main)/dashboard/expenses/_components/expense-table/expense-table"
 import { Button } from "@/components/ui/button"
-import { DEFAULT_USER_ID, useExpenseMutations } from "@/query-options/expense/mutations"
+import { useExpenseMutations } from "@/query-options/expense/mutations"
 import { CreateExpenseCommand, ExpenseDTO, UpdateExpenseCommand } from "@/types/types"
 
 export function DashboardExpenseView() {
@@ -43,7 +43,6 @@ export function DashboardExpenseView() {
 		if (formMode === "add") {
 			const createCommand: CreateExpenseCommand = {
 				...formattedValues,
-				user_id: DEFAULT_USER_ID,
 			}
 			createMutation.mutate(createCommand)
 		} else if (selectedExpense) {

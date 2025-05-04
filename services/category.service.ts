@@ -5,7 +5,13 @@ import { CategoryDTO, CreateCategoryCommand, UpdateCategoryCommand } from "@/typ
 
 export async function getCategories(): Promise<CategoryDTO[]> {
 	const supabase = await createClient()
-	const { data, error } = await supabase.from("category").select("*")
+	const { error: sessionError, data: user } = await supabase.auth.getUser()
+
+	if (sessionError) {
+		throw new Error(sessionError.message)
+	}
+
+	const { data, error } = await supabase.from("category").select("*").eq("user_id", user.user?.id)
 
 	if (error) {
 		throw new Error(error.message)
@@ -16,7 +22,17 @@ export async function getCategories(): Promise<CategoryDTO[]> {
 
 export async function createCategory(command: CreateCategoryCommand): Promise<CategoryDTO> {
 	const supabase = await createClient()
-	const { data, error } = await supabase.from("category").insert(command).select().single()
+	const { error: sessionError, data: user } = await supabase.auth.getUser()
+
+	if (sessionError) {
+		throw new Error(sessionError.message)
+	}
+
+	const { data, error } = await supabase
+		.from("category")
+		.insert({ ...command, user_id: user.user?.id })
+		.select()
+		.single()
 
 	if (error) {
 		throw new Error(error.message)
@@ -27,7 +43,18 @@ export async function createCategory(command: CreateCategoryCommand): Promise<Ca
 
 export async function updateCategory(command: UpdateCategoryCommand): Promise<CategoryDTO> {
 	const supabase = await createClient()
-	const { data, error } = await supabase.from("category").update(command).eq("id", command.id).select().single()
+	const { error: sessionError, data: user } = await supabase.auth.getUser()
+
+	if (sessionError) {
+		throw new Error(sessionError.message)
+	}
+
+	const { data, error } = await supabase
+		.from("category")
+		.update({ ...command, user_id: user.user?.id })
+		.eq("id", command.id)
+		.select()
+		.single()
 
 	if (error) {
 		throw new Error(error.message)
@@ -38,6 +65,12 @@ export async function updateCategory(command: UpdateCategoryCommand): Promise<Ca
 
 export async function deleteCategory(id: number): Promise<void> {
 	const supabase = await createClient()
+	const { error: sessionError } = await supabase.auth.getUser()
+
+	if (sessionError) {
+		throw new Error(sessionError.message)
+	}
+
 	const { error } = await supabase.from("category").delete().eq("id", id)
 
 	if (error) {

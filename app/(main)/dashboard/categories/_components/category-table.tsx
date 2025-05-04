@@ -42,7 +42,7 @@ export function CategoryTable({ categories, isLoading = false, onEdit, onDelete 
 
 	if (categories.length === 0) {
 		return (
-			<div className="flex flex-col items-center justify-center p-8 text-center">
+			<div className="flex flex-col items-center justify-center p-8 text-center" data-testid="empty-categories">
 				<p className="mb-4 text-lg font-medium">No categories found</p>
 				<p className="text-muted-foreground text-sm">Create your first category to get started.</p>
 			</div>
@@ -50,7 +50,7 @@ export function CategoryTable({ categories, isLoading = false, onEdit, onDelete 
 	}
 
 	return (
-		<div className="rounded-md border">
+		<div className="rounded-md border" data-testid="categories-table-container">
 			<Table>
 				<TableHeader>
 					<TableRow>
@@ -58,10 +58,12 @@ export function CategoryTable({ categories, isLoading = false, onEdit, onDelete 
 						<TableHead className="w-[100px]">Actions</TableHead>
 					</TableRow>
 				</TableHeader>
-				<TableBody>
+				<TableBody data-testid="categories-table-body">
 					{categories.map((category) => (
-						<TableRow key={category.id}>
-							<TableCell className="font-medium">{category.name}</TableCell>
+						<TableRow key={category.id} data-testid={`category-row-${category.id}`}>
+							<TableCell className="font-medium" data-testid={`category-name-${category.id}`}>
+								{category.name}
+							</TableCell>
 							<TableCell>
 								<CategoryActions
 									category={category}

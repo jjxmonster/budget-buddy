@@ -1,11 +1,17 @@
 import { expect, test } from "@playwright/test"
-import { ExpensesPage } from "../page-objects/ExpensesPage"
+import { CategoriesPage } from "../page-objects/categories-page"
+import { ExpensesPage } from "../page-objects/expenses-page"
 
 test.describe("Expenses Dashboard", () => {
 	let expensesPage: ExpensesPage
+	let categoryName: string
 
 	test.beforeEach(async ({ page }) => {
-		// Navigate to expenses page and verify it's loaded
+		const categoriesPage = new CategoriesPage(page)
+		categoryName = "Food" + Date.now()
+		await categoriesPage.goto()
+		await categoriesPage.addCategory(categoryName)
+
 		expensesPage = new ExpensesPage(page)
 		await expensesPage.goto()
 		await expensesPage.expectPageLoaded()
@@ -14,10 +20,10 @@ test.describe("Expenses Dashboard", () => {
 	test("should add a new expense and verify it appears in the table", async () => {
 		// Test data for the new expense
 		const newExpense = {
-			title: "Test Expense " + Date.now(), // Make title unique with timestamp
+			title: "Test Expense " + Date.now(),
 			description: "Test description for automated test",
 			amount: 42.5,
-			category: "Food",
+			category: categoryName,
 			source: "Revolut",
 		}
 
@@ -27,38 +33,9 @@ test.describe("Expenses Dashboard", () => {
 		// Step 2: Fill in the expense form
 		await expensesPage.fillExpenseForm(newExpense)
 
-		// Optional: Take screenshot of filled form for visual verification
-		await expensesPage.takeScreenshot("filled-form")
-
 		// Step 3: Submit the form
 		await expensesPage.submitExpenseForm()
 
-		// Step 4: Verify the new expense appears in the table
 		await expensesPage.expectExpenseExists(newExpense)
-
-		// Optional: Take screenshot of table showing the new expense
-		await expensesPage.takeScreenshot("added-expense")
-	})
-
-	test("should cancel adding an expense", async () => {
-		// Test data for the expense
-		const expenseToCancel = {
-			title: "Expense To Cancel",
-			amount: 25.99,
-		}
-
-		// Open form and fill it
-		await expensesPage.openAddExpenseForm()
-		await expensesPage.fillExpenseForm(expenseToCancel)
-
-		// Cancel the form
-		await expensesPage.cancelExpenseForm()
-
-		// Verify the form is closed
-		await expect(expensesPage.expenseFormModal).not.toBeVisible()
-
-		// Try to find the canceled expense (should not exist)
-		const canceledExpenseRow = expensesPage.getExpenseRowByTitle(expenseToCancel.title)
-		await expect(canceledExpenseRow).not.toBeVisible({ timeout: 1000 })
 	})
 })

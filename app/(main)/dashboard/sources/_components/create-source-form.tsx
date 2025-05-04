@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { DEFAULT_USER_ID, useSourceMutations } from "@/query-options/source/mutations"
+import { useSourceMutations } from "@/query-options/source/mutations"
 import { CreateSourceCommand } from "@/types/types"
 
 interface CreateSourceFormProps {
@@ -36,10 +36,9 @@ export function CreateSourceForm({ onSuccess, onCancel }: CreateSourceFormProps)
 	async function onSubmit(values: SourceFormValues) {
 		const command: CreateSourceCommand = {
 			...values,
-			user_id: DEFAULT_USER_ID,
 		}
 
-		await createMutation.mutateAsync(command)
+		createMutation.mutate(command)
 		form.reset()
 		onSuccess?.()
 	}

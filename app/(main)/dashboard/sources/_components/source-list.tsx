@@ -55,9 +55,9 @@ export function SourceList() {
 				source={sourceToDelete}
 				isOpen={sourceToDelete !== null}
 				onClose={() => setSourceToDelete(null)}
-				onConfirm={async () => {
+				onConfirm={() => {
 					if (sourceToDelete) {
-						await deleteMutation.mutateAsync(sourceToDelete.id)
+						deleteMutation.mutate(sourceToDelete.id)
 						setSourceToDelete(null)
 					}
 				}}

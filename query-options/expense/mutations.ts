@@ -5,8 +5,6 @@ import { toast } from "sonner"
 import { createExpense, deleteExpense, updateExpense } from "@/services/expense.service"
 import { CreateExpenseCommand, UpdateExpenseCommand } from "@/types/types"
 
-export const DEFAULT_USER_ID = "e34f411a-6c4c-46d8-844f-c6f2fcc8b6f6"
-
 export function useExpenseMutations() {
 	const queryClient = useQueryClient()
 

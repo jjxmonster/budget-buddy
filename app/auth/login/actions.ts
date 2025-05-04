@@ -32,7 +32,7 @@ export async function login(formData: FormData) {
 	}
 
 	try {
-		const { error } = await supabase.auth.signInWithPassword({
+		const { error, data } = await supabase.auth.signInWithPassword({
 			email: validatedFields.data.email,
 			password: validatedFields.data.password,
 		})
@@ -49,6 +49,7 @@ export async function login(formData: FormData) {
 		}
 
 		revalidatePath("/", "layout")
+		return data
 	} catch {
 		return {
 			error: "An unexpected error occurred",
