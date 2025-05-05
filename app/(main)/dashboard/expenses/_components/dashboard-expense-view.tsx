@@ -2,6 +2,7 @@
 
 import { Plus } from "lucide-react"
 import { useState } from "react"
+import { ChatButton } from "@/app/(main)/dashboard/expenses/_components/chat-button"
 import { ConfirmationModal } from "@/app/(main)/dashboard/expenses/_components/confirmation-modal"
 import { ExpenseFormModal, ExpenseFormValues } from "@/app/(main)/dashboard/expenses/_components/expense-form-modal"
 import { ExpenseTable } from "@/app/(main)/dashboard/expenses/_components/expense-table/expense-table"
@@ -88,6 +89,9 @@ export function DashboardExpenseView() {
 				onConfirm={handleDeleteConfirm}
 				onCancel={() => setIsDeleteModalOpen(false)}
 			/>
+
+			{/* Chat Button */}
+			<ChatButton />
 		</div>
 	)
 }

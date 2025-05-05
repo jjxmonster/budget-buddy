@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { createExpense, deleteExpense, updateExpense } from "@/services/expense.service"
+import { createExpense, deleteExpense, updateExpense } from "@/actions/expense.actions"
 import { CreateExpenseCommand, UpdateExpenseCommand } from "@/types/types"
 
 export function useExpenseMutations() {

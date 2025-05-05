@@ -2,8 +2,8 @@
 
 import { useQuery } from "@tanstack/react-query"
 import { useState } from "react"
+import { getExpenses, PaginatedResult } from "@/actions/expense.actions"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { getExpenses, PaginatedResult } from "@/services/expense.service"
 import { ExpenseDTO } from "@/types/types"
 import { ExpenseTablePagination } from "./expense-table-pagination"
 import { ExpenseTableRow } from "./expense-table-row"

@@ -7,7 +7,7 @@ alwaysApply: false
 
 - Next.js 15
 - TypeScript 5
-- React 19
+- React 19 
 - Tailwind 4
 - Shadcn/ui
 - Supabase
@@ -18,7 +18,6 @@ When introducing changes to the project, always follow the directory structure b
 
 - `.` - source code
 - `./app/(main)` - Next.js main pages
-- `./app/api` - API endpoints
 - `./app/{{name}}` - Next.js other pages
 - `./app/{{name}}/_components` - Components for specific route
 - `./db` - Supabase clients and types
@@ -27,6 +26,7 @@ When introducing changes to the project, always follow the directory structure b
 - `./lib` - Services and helpers 
 - `./assets` - static internal assets
 - `./public` - public assets
+- `./services` - backend services (server actions)
 
 When modifying the directory structure, always update this section.
 

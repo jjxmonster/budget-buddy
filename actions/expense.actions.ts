@@ -1,7 +1,6 @@
 "use server"
 
 import { ExpenseFilter } from "@/app/(main)/dashboard/expenses/_components/filter-component"
-import { Database } from "@/db/database.types"
 import { createClient } from "@/db/supabase.client"
 import { CreateExpenseCommand, ExpenseDTO, UpdateExpenseCommand } from "@/types/types"
 

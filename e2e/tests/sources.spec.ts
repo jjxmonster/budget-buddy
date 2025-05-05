@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test"
+import { test } from "@playwright/test"
 import { SourcesPage } from "../page-objects/sources-page"
 
 test.describe("Sources Management", () => {
