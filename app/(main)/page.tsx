@@ -1,69 +1,140 @@
-import Image from "next/image"
+"use client"
+
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
 export default function Home() {
 	return (
-		<div className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-8 pb-20 font-[family-name:var(--font-geist-sans)] sm:p-20">
-			<main className="row-start-2 flex flex-col items-center gap-[32px] sm:items-start">
-				<Image className="dark:invert" src="/next.svg" alt="Next.js logo" width={180} height={38} priority />
-				<ol className="list-inside list-decimal text-center font-[family-name:var(--font-geist-mono)] text-sm/6 sm:text-left">
-					<li className="mb-2 tracking-[-.01em]">
-						Get started by editing{" "}
-						<code className="rounded bg-black/[.05] px-1 py-0.5 font-[family-name:var(--font-geist-mono)] font-semibold dark:bg-white/[.06]">
-							app/page.tsx
-						</code>
-						.
-					</li>
-					<li className="tracking-[-.01em]">Save and see your changes instantly.</li>
-				</ol>
-
-				<div className="flex flex-col items-center gap-4 sm:flex-row">
-					<a
-						className="bg-foreground text-background flex h-10 items-center justify-center gap-2 rounded-full border border-solid border-transparent px-4 text-sm font-medium transition-colors hover:bg-[#383838] sm:h-12 sm:w-auto sm:px-5 sm:text-base dark:hover:bg-[#ccc]"
-						href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						<Image className="dark:invert" src="/vercel.svg" alt="Vercel logomark" width={20} height={20} />
-						Deploy now
-					</a>
-					<a
-						className="flex h-10 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-4 text-sm font-medium transition-colors hover:border-transparent hover:bg-[#f2f2f2] sm:h-12 sm:w-auto sm:px-5 sm:text-base md:w-[158px] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]"
-						href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						Read our docs
-					</a>
+		<div className="flex min-h-screen flex-col">
+			{/* Navigation Bar */}
+			<nav className="bg-background/95 sticky top-0 z-10 flex h-16 w-full items-center justify-between border-b px-4 backdrop-blur sm:px-8 md:px-12">
+				<div className="flex items-center gap-2">
+					<span className="text-xl font-bold">BudgetBuddy</span>
 				</div>
-			</main>
-			<footer className="row-start-3 flex flex-wrap items-center justify-center gap-[24px]">
-				<a
-					className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-					href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-					target="_blank"
-					rel="noopener noreferrer"
-				>
-					<Image aria-hidden src="/file.svg" alt="File icon" width={16} height={16} />
-					Learn
-				</a>
-				<a
-					className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-					href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-					target="_blank"
-					rel="noopener noreferrer"
-				>
-					<Image aria-hidden src="/window.svg" alt="Window icon" width={16} height={16} />
-					Examples
-				</a>
-				<a
-					className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-					href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-					target="_blank"
-					rel="noopener noreferrer"
-				>
-					<Image aria-hidden src="/globe.svg" alt="Globe icon" width={16} height={16} />
-					Go to nextjs.org →
-				</a>
+				<div className="flex items-center gap-4">
+					<Link href="/auth/login">
+						<Button variant="outline">Login</Button>
+					</Link>
+					<Link href="/auth/register">
+						<Button>Sign Up</Button>
+					</Link>
+				</div>
+			</nav>
+
+			{/* Hero Section */}
+			<section className="flex flex-col items-center justify-center gap-8 px-4 py-16 text-center md:py-24 lg:py-32">
+				<div className="flex max-w-3xl flex-col gap-4">
+					<h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl">
+						Take Control of Your <span className="text-primary">Finances</span>
+					</h1>
+					<p className="text-muted-foreground mx-auto max-w-[700px] text-lg">
+						Track expenses, manage your budget, and get AI-powered insights to help you make smarter financial
+						decisions.
+					</p>
+				</div>
+				<div className="flex flex-col gap-4 sm:flex-row">
+					<Link href="/auth/register">
+						<Button size="lg" className="px-8">
+							Get Started
+						</Button>
+					</Link>
+					<Link href="#features">
+						<Button size="lg" variant="outline" className="px-8">
+							Learn More
+						</Button>
+					</Link>
+				</div>
+			</section>
+
+			{/* Features Section */}
+			<section id="features" className="bg-muted/50 px-4 py-16 md:py-24">
+				<div className="mx-auto max-w-7xl">
+					<h2 className="mb-12 text-center text-3xl font-bold tracking-tight sm:text-4xl">
+						Everything You Need to Manage Your Budget
+					</h2>
+					<div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+						{/* Feature Card 1 */}
+						<div className="bg-card flex flex-col rounded-lg border p-6 shadow-sm transition-all hover:shadow-md">
+							<div className="bg-primary/10 mb-4 w-fit rounded-full p-3">
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="24"
+									height="24"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									strokeWidth="2"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									className="text-primary"
+								>
+									<rect width="20" height="14" x="2" y="5" rx="2" />
+									<line x1="2" x2="22" y1="10" y2="10" />
+								</svg>
+							</div>
+							<h3 className="mb-2 text-xl font-bold">Expense Tracking</h3>
+							<p className="text-muted-foreground">
+								Easily add, edit, and categorize your expenses to keep track of where your money is going.
+							</p>
+						</div>
+
+						{/* Feature Card 2 */}
+						<div className="bg-card flex flex-col rounded-lg border p-6 shadow-sm transition-all hover:shadow-md">
+							<div className="bg-primary/10 mb-4 w-fit rounded-full p-3">
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="24"
+									height="24"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									strokeWidth="2"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									className="text-primary"
+								>
+									<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+									<path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+								</svg>
+							</div>
+							<h3 className="mb-2 text-xl font-bold">Category Management</h3>
+							<p className="text-muted-foreground">
+								Create and manage custom categories to organize your expenses in a way that makes sense for you.
+							</p>
+						</div>
+
+						{/* Feature Card 3 */}
+						<div className="bg-card flex flex-col rounded-lg border p-6 shadow-sm transition-all hover:shadow-md">
+							<div className="bg-primary/10 mb-4 w-fit rounded-full p-3">
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="24"
+									height="24"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									strokeWidth="2"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									className="text-primary"
+								>
+									<circle cx="12" cy="12" r="10" />
+									<line x1="12" x2="12" y1="8" y2="12" />
+									<line x1="12" x2="12.01" y1="16" y2="16" />
+								</svg>
+							</div>
+							<h3 className="mb-2 text-xl font-bold">AI Insights</h3>
+							<p className="text-muted-foreground">
+								Get intelligent answers about your spending habits and expense history from our AI assistant.
+							</p>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			{/* Footer */}
+			<footer className="bg-background text-muted-foreground border-t px-4 py-8 text-center text-sm">
+				<p>© {new Date().getFullYear()} BudgetBuddy. All rights reserved.</p>
 			</footer>
 		</div>
 	)
