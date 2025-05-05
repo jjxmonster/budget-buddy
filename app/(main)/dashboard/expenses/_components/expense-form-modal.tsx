@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQuery } from "@tanstack/react-query"
 import { format } from "date-fns"
-import { Calendar as CalendarIcon } from "lucide-react"
+import { Calendar as CalendarIcon, Loader2 } from "lucide-react"
 import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
@@ -78,7 +78,11 @@ export function ExpenseFormModal({ open, mode, defaultValues, onClose, onSubmit 
 	}, [form, defaultValues, open])
 
 	if (isLoading) {
-		return <>loading...</>
+		return (
+			<div className="flex h-full items-center justify-center">
+				<Loader2 className="h-4 w-4 animate-spin" />
+			</div>
+		)
 	}
 
 	return (

@@ -1,13 +1,16 @@
 "use client"
 
+import { useQuery } from "@tanstack/react-query"
 import { format } from "date-fns"
-import { CalendarIcon, Search, X } from "lucide-react"
+import { CalendarIcon, Loader2, Search, X } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Input } from "@/components/ui/input"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { getCategories } from "@/services/category.service"
+import { getSources } from "@/services/source.service"
 import { cn } from "@/utils/helpers"
 
 export interface ExpenseFilter {
@@ -32,6 +35,18 @@ export function FilterComponent({ onFilterChange }: FilterComponentProps) {
 		order: "desc",
 	})
 
+	const { data: categories, isLoading: isCategoriesLoading } = useQuery({
+		queryKey: ["categories"],
+		queryFn: () => getCategories(),
+	})
+
+	const { data: sources, isLoading: isSourcesLoading } = useQuery({
+		queryKey: ["sources"],
+		queryFn: () => getSources(),
+	})
+
+	const isLoading = isCategoriesLoading || isSourcesLoading
+
 	useEffect(() => {
 		const timer = setTimeout(() => {
 			onFilterChange(filter)
@@ -39,6 +54,14 @@ export function FilterComponent({ onFilterChange }: FilterComponentProps) {
 
 		return () => clearTimeout(timer)
 	}, [filter, onFilterChange])
+
+	if (isLoading || !categories || !sources) {
+		return (
+			<div className="flex h-full items-center justify-center">
+				<Loader2 className="h-4 w-4 animate-spin" />
+			</div>
+		)
+	}
 
 	// Update filter state
 	const updateFilter = <T,>(key: keyof ExpenseFilter, value: T) => {
@@ -52,19 +75,6 @@ export function FilterComponent({ onFilterChange }: FilterComponentProps) {
 			order: "desc",
 		})
 	}
-
-	// Temporary mock data for categories and sources
-	const categories = [
-		{ id: 1, name: "Food" },
-		{ id: 2, name: "Transport" },
-		{ id: 3, name: "Entertainment" },
-	]
-
-	const sources = [
-		{ id: 1, name: "Cash" },
-		{ id: 2, name: "Credit Card" },
-		{ id: 3, name: "Bank Transfer" },
-	]
 
 	return (
 		<div className="space-y-4">
