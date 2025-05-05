@@ -1,6 +1,6 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query"
 import { Metadata } from "next"
-import { getExpenses } from "@/services/expense.service"
+import { getExpenses } from "@/actions/expense.actions"
 import { getQueryClient } from "@/utils/get-query-client"
 import { DashboardExpenseView } from "./_components/dashboard-expense-view"
 

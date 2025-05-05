@@ -1,3 +1,5 @@
+// OpenRouter API types
+
 export interface Message {
 	role: "system" | "user" | "assistant"
 	content: string
@@ -10,6 +12,7 @@ export interface OpenRouterConfig {
 }
 
 export interface ModelOptions {
+	model?: string
 	temperature?: number
 	maxTokens?: number
 	topP?: number
@@ -17,11 +20,18 @@ export interface ModelOptions {
 }
 
 export interface ResponseFormat {
-	type: "json_schema"
-	json_schema: {
+	type: "json_schema" | "text" | "json_object"
+	json_schema?: {
 		name: string
 		strict: boolean
 		schema: object
+	}
+}
+
+export interface OpenRouterResponse {
+	content: string
+	usage: {
+		totalTokens: number
 	}
 }
 
@@ -37,16 +47,10 @@ export class OpenRouterError extends Error {
 	}
 }
 
-export interface OpenRouterResponse {
-	content: string
-	usage: {
-		totalTokens: number
-	}
-}
-
 export interface OpenRouterModelInfo {
 	id: string
 	name: string
+	description: string
 	context_length: number
 	pricing: {
 		prompt: number

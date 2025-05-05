@@ -15,6 +15,7 @@ const eslintIgnore = [
 	"*.min.js",
 	"*.config.js",
 	"*.d.ts",
+	"playwright-report/",
 ]
 
 const config = typescriptEslint.config(

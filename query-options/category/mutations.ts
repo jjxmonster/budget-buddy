@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { createCategory, deleteCategory, updateCategory } from "@/services/category.service"
+import { createCategory, deleteCategory, updateCategory } from "@/actions/category.actions"
 import { CreateCategoryCommand, UpdateCategoryCommand } from "@/types/types"
 
 export function useCategoryMutations() {

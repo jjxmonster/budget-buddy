@@ -1,6 +1,6 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query"
 import { Metadata } from "next"
-import { getCategories } from "@/services/category.service"
+import { getCategories } from "@/actions/category.actions"
 import { getQueryClient } from "@/utils/get-query-client"
 import { CategoryList } from "./_components/category-list"
 

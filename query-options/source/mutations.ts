@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { createSource, deleteSource, updateSource } from "@/services/source.service"
+import { createSource, deleteSource, updateSource } from "@/actions/source.actions"
 import { CreateSourceCommand, UpdateSourceCommand } from "@/types/types"
 
 export function useSourceMutations() {

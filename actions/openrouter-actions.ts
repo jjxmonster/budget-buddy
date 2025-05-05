@@ -1,18 +1,11 @@
 "use server"
 
+import { env } from "@/env.mjs"
 import { Message } from "@/types/openrouter.types"
-import { OpenRouterService } from "./openrouter.service"
+import { OpenRouterService } from "../services/openrouter.service"
 
-/**
- * Generates a chat response using the OpenRouter API
- *
- * @param userMessage - The message from the user
- * @param chatHistory - Previous messages in the conversation
- * @returns The AI assistant's response
- */
 export async function generateChatResponse(userMessage: string, chatHistory: { role: string; content: string }[] = []) {
-	// Check for API key in environment variables
-	const apiKey = process.env.OPENROUTER_API_KEY
+	const apiKey = env.OPENROUTER_API_KEY
 	if (!apiKey) {
 		throw new Error("OpenRouter API key is not configured")
 	}
