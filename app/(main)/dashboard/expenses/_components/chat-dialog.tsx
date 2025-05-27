@@ -5,6 +5,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { cn } from "@/utils/helpers"
 import { ChatMessage, sendChatMessage, submitFeedback } from "../../../../../actions/chat-actions"
 
@@ -15,6 +16,7 @@ interface ChatDialogProps {
 
 export function ChatDialog({ open, onClose }: ChatDialogProps) {
 	const [input, setInput] = useState("")
+	const [apiKey, setApiKey] = useState("")
 	const [messages, setMessages] = useState<ChatMessage[]>([
 		{
 			role: "assistant",
@@ -38,7 +40,7 @@ export function ChatDialog({ open, onClose }: ChatDialogProps) {
 
 		try {
 			// Send message to server action
-			const response = await sendChatMessage(userMessage.content, messages)
+			const response = await sendChatMessage(userMessage.content, messages, apiKey || undefined)
 
 			// Remove the loading message
 			setMessages((prev) => prev.filter((msg) => !msg.isLoading))
@@ -93,6 +95,23 @@ export function ChatDialog({ open, onClose }: ChatDialogProps) {
 			<DialogContent className="flex h-[600px] flex-col gap-0 p-0 sm:max-w-md">
 				<div className="flex items-center justify-between border-b p-4">
 					<DialogTitle className="text-lg font-semibold">Budget Buddy Assistant</DialogTitle>
+				</div>
+
+				<div className="bg-muted/50 border-b p-4">
+					<div className="space-y-2">
+						<Label htmlFor="api-key" className="text-sm font-medium">
+							OpenRouter API Key
+						</Label>
+						<Input
+							id="api-key"
+							type="password"
+							value={apiKey}
+							onChange={(e) => setApiKey(e.target.value)}
+							placeholder="sk-or-v1-..."
+							className="text-sm"
+						/>
+						<p className="text-muted-foreground text-xs">Provide your own OpenRouter API key.</p>
+					</div>
 				</div>
 
 				<div className="flex-1 space-y-4 overflow-y-auto p-4">

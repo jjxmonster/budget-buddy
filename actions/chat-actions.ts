@@ -16,7 +16,7 @@ export type ChatMessage = {
 /**
  * Server action to send a message to the AI assistant
  */
-export async function sendChatMessage(userMessage: string, chatHistory: ChatMessage[]) {
+export async function sendChatMessage(userMessage: string, chatHistory: ChatMessage[], apiKey?: string) {
 	try {
 		// Convert UI chat messages to the format expected by the AI service
 		const serviceMessages: Message[] = chatHistory
@@ -27,7 +27,7 @@ export async function sendChatMessage(userMessage: string, chatHistory: ChatMess
 			}))
 
 		// Process the message
-		const response = await processAIAssistantMessage(userMessage, serviceMessages)
+		const response = await processAIAssistantMessage(userMessage, serviceMessages, false, apiKey)
 
 		// Return the message in the format expected by the UI
 		return {

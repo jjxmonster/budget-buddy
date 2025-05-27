@@ -41,7 +41,8 @@ export async function recordAssistantFeedback(questionId: number, rating: number
 export async function processAIAssistantMessage(
 	userMessage: string,
 	chatHistory: Message[] = [],
-	includeDebugInfo = false
+	includeDebugInfo = false,
+	customApiKey?: string
 ): Promise<ChatResponse> {
 	try {
 		// Get current user
@@ -56,12 +57,14 @@ export async function processAIAssistantMessage(
 
 		const userId = userData.user.id
 
-		// Check for API key in environment variables
-		const apiKey = env.OPENROUTER_API_KEY
+		// Use custom API key if provided, otherwise fall back to environment variable
+		const apiKey = customApiKey || env.OPENROUTER_API_KEY
 		if (!apiKey) {
 			return {
-				content: "The assistant is not available at the moment. Please try again later.",
-				error: "OpenRouter API key is not configured",
+				content: customApiKey
+					? "The provided API key appears to be invalid. Please check your API key and try again."
+					: "The assistant is not available at the moment. Please try again later or provide your own OpenRouter API key.",
+				error: customApiKey ? "Invalid custom API key" : "OpenRouter API key is not configured",
 			}
 		}
 
