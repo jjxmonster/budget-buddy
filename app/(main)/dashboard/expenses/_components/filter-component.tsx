@@ -1,17 +1,14 @@
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
-import { format } from "date-fns"
-import { CalendarIcon, Loader2, Search, X } from "lucide-react"
+import { Loader2, Search, X } from "lucide-react"
 import { useEffect, useState } from "react"
 import { getCategories } from "@/actions/category.actions"
 import { getSources } from "@/actions/source.actions"
 import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
+import { DateRangePicker } from "@/components/ui/date-range-picker"
 import { Input } from "@/components/ui/input"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { cn } from "@/utils/helpers"
 
 export interface ExpenseFilter {
 	search?: string
@@ -91,55 +88,17 @@ export function FilterComponent({ onFilterChange }: FilterComponentProps) {
 				</div>
 
 				{/* Date range */}
-				<div className="flex gap-2">
-					<div className="flex-1">
-						<Popover>
-							<PopoverTrigger asChild>
-								<Button
-									variant="outline"
-									className={cn(
-										"w-full justify-start text-left font-normal",
-										!filter.date_from && "text-muted-foreground"
-									)}
-								>
-									<CalendarIcon className="mr-2 h-4 w-4" />
-									{filter.date_from ? format(filter.date_from, "PPP") : "From"}
-								</Button>
-							</PopoverTrigger>
-							<PopoverContent className="w-auto p-0" align="start">
-								<Calendar
-									mode="single"
-									selected={filter.date_from}
-									onSelect={(date) => updateFilter("date_from", date)}
-									initialFocus
-								/>
-							</PopoverContent>
-						</Popover>
-					</div>
-					<div className="flex-1">
-						<Popover>
-							<PopoverTrigger asChild>
-								<Button
-									variant="outline"
-									className={cn(
-										"w-full justify-start text-left font-normal",
-										!filter.date_to && "text-muted-foreground"
-									)}
-								>
-									<CalendarIcon className="mr-2 h-4 w-4" />
-									{filter.date_to ? format(filter.date_to, "PPP") : "To"}
-								</Button>
-							</PopoverTrigger>
-							<PopoverContent className="w-auto p-0" align="start">
-								<Calendar
-									mode="single"
-									selected={filter.date_to}
-									onSelect={(date) => updateFilter("date_to", date)}
-									initialFocus
-								/>
-							</PopoverContent>
-						</Popover>
-					</div>
+				<div>
+					<DateRangePicker
+						onUpdate={(values) => {
+							updateFilter("date_from", values.range.from)
+							updateFilter("date_to", values.range.to)
+						}}
+						initialDateFrom={filter.date_from}
+						initialDateTo={filter.date_to}
+						align="start"
+						showCompare={false}
+					/>
 				</div>
 
 				{/* Amount range */}
