@@ -1,5 +1,6 @@
 import { tool } from "ai"
 import { z } from "zod"
+import { getExpenses } from "@/services/supabase.service"
 
 const getExpensesSchema = z.object({
 	dateFrom: z.string().optional(),
@@ -11,12 +12,19 @@ const getExpensesSchema = z.object({
 
 export type GetExpensesInput = z.infer<typeof getExpensesSchema>
 
-export const getExpenses = tool({
+export const getExpensesTool = tool({
 	name: "getExpenses",
 	description: "Get expenses",
 	inputSchema: getExpensesSchema,
+	execute: async ({ dateFrom, dateTo, category, maxAmount, minAmount }) => {
+		const expenses = await getExpenses({ dateFrom, dateTo, category, maxAmount, minAmount })
+		console.log("expenses", expenses)
+		return expenses
+	},
 })
 
 export default async function getTools() {
-	return [getExpenses]
+	return {
+		getExpenses: getExpensesTool,
+	}
 }
