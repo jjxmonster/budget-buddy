@@ -15,6 +15,18 @@ interface ChatDialogProps {
 	onClose: () => void
 }
 
+interface MessagePart {
+	type: string
+	text?: string
+	toolInvocation?: {
+		state: "partial-call" | "call" | "result"
+		toolName: string
+		toolCallId: string
+		args?: Record<string, unknown>
+		result?: Record<string, unknown>
+	}
+}
+
 export function ChatDialog({ open, onClose }: ChatDialogProps) {
 	const [apiKey, setApiKey] = useState("")
 	const [input, setInput] = useState("")
@@ -48,14 +60,7 @@ export function ChatDialog({ open, onClose }: ChatDialogProps) {
 		setInput("")
 	}
 
-	const handleFeedback = async (messageId: string, isPositive: boolean) => {
-		// For now, just log the feedback since we need to integrate with the existing feedback system
-		// In a full implementation, you'd need to map the message ID to the feedback system
-		console.log(`Feedback for message ${messageId}: ${isPositive ? "positive" : "negative"}`)
-
-		// You could extend this to work with the existing submitFeedback function
-		// by storing a mapping between useChat message IDs and your database IDs
-	}
+	const handleFeedback = async (_messageId: string, _isPositive: boolean) => {}
 
 	return (
 		<Dialog open={open} onOpenChange={(open) => !open && onClose()}>
@@ -99,12 +104,63 @@ export function ChatDialog({ open, onClose }: ChatDialogProps) {
 							) : (
 								<div className="flex flex-col">
 									<div className={cn("p-3", message.role === "assistant" && "bg-muted")}>
-										{message.parts?.map((part, index) =>
-											part.type === "text" ? <span key={index}>{part.text}</span> : null
-										)}
+										{message.parts?.map((part: MessagePart, index) => {
+											switch (part.type) {
+												case "text":
+													return <span key={index}>{part.text}</span>
+												case "tool-invocation":
+													if (!part.toolInvocation) return null
+													switch (part.toolInvocation.state) {
+														case "partial-call":
+															return (
+																<div key={index} className="my-1 rounded border border-blue-200 bg-blue-50 p-2">
+																	<div className="flex items-center space-x-2">
+																		<Loader2 className="h-3 w-3 animate-spin text-blue-600" />
+																		<span className="text-sm text-blue-800">
+																			Calling {part.toolInvocation.toolName}...
+																		</span>
+																	</div>
+																</div>
+															)
+														case "call":
+															return (
+																<div key={index} className="my-1 rounded border border-yellow-200 bg-yellow-50 p-2">
+																	<div className="flex items-center space-x-2">
+																		<Loader2 className="h-3 w-3 animate-spin text-yellow-600" />
+																		<span className="text-sm text-yellow-800">
+																			Executing {part.toolInvocation.toolName}...
+																		</span>
+																	</div>
+																</div>
+															)
+														case "result":
+															return (
+																<div key={index} className="my-1 rounded border border-green-200 bg-green-50 p-2">
+																	<div className="text-sm text-green-800">
+																		<strong>{part.toolInvocation.toolName} completed</strong>
+																		{part.toolInvocation.result && (
+																			<div className="mt-1 text-xs text-green-600">
+																				Found{" "}
+																				{Array.isArray((part.toolInvocation.result as Record<string, unknown>)?.data)
+																					? ((part.toolInvocation.result as Record<string, unknown>).data as unknown[])
+																							.length
+																					: 0}{" "}
+																				expenses
+																			</div>
+																		)}
+																	</div>
+																</div>
+															)
+														default:
+															return null
+													}
+												default:
+													return null
+											}
+										})}
 									</div>
 
-									{message.role === "assistant" && message.parts?.[0]?.type === "text" && message.parts[0].text && (
+									{message.role === "assistant" && message.parts?.some((part) => part.type === "text" && part.text) && (
 										<div className="flex justify-end space-x-2 p-2">
 											<span className="text-muted-foreground mr-2 text-xs">Was this helpful?</span>
 											<Button

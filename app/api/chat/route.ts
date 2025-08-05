@@ -1,58 +1,31 @@
-import { createOpenRouter } from "@openrouter/ai-sdk-provider"
-import { convertToModelMessages, streamText, UIMessage } from "ai"
-import { NextRequest } from "next/server"
-import { env } from "@/env.mjs"
-import { getCurrentUser } from "@/services/supabase.service"
+import { convertToModelMessages, streamText } from "ai"
+import { openrouter } from "@/services/ai-agent.service"
 import getTools from "@/utils/ai-tools"
 
 export const maxDuration = 30
 
-export async function POST(req: NextRequest) {
-	try {
-		const body = await req.json()
-		const { messages, apiKey }: { messages: UIMessage[]; apiKey?: string } = body
+const LLAMA_MODEL = "anthropic/claude-3-5-sonnet"
 
-		console.log("Chat API received:", { messagesCount: messages?.length, hasApiKey: !!apiKey })
+export async function POST(req: Request) {
+	const { messages, model = LLAMA_MODEL } = await req.json()
 
-		if (!messages || !Array.isArray(messages)) {
-			return new Response("Invalid messages format", {
-				status: 400,
-				headers: {
-					"Content-Type": "text/plain; charset=utf-8",
-				},
-			})
-		}
+	const result = streamText({
+		model: openrouter(model),
+		messages: [
+			{
+				role: "system",
+				content: SYSTEM_PROMPT,
+			},
+			...convertToModelMessages(messages),
+		],
 
-		// Check authentication
-		const { data: userData, error: userError } = await getCurrentUser()
-		if (userError || !userData?.user) {
-			return new Response("Authentication required", {
-				status: 401,
-				headers: {
-					"Content-Type": "text/plain; charset=utf-8",
-				},
-			})
-		}
+		tools: await getTools(),
+	})
 
-		// Use custom API key if provided, otherwise fall back to environment variable
-		const finalApiKey = env.OPENROUTER_API_KEY
-		if (!finalApiKey) {
-			return new Response("API key is required", {
-				status: 400,
-				headers: {
-					"Content-Type": "text/plain; charset=utf-8",
-				},
-			})
-		}
+	return result.toUIMessageStreamResponse()
+}
 
-		// Get tools for the AI assistant
-		const tools = await getTools()
-
-		// Convert UI messages to core messages
-		const coreMessages = convertToModelMessages(messages)
-
-		// Create system message based on PRD requirements
-		const systemMessage = `You are Budget Buddy, an AI assistant for a personal expense management application. Your primary role is to help users understand and analyze their financial data by answering questions about their expense history.
+const SYSTEM_PROMPT = `You are Budget Buddy, an AI assistant for a personal expense management application. Your primary role is to help users understand and analyze their financial data by answering questions about their expense history.
 
 ## About Budget Buddy Application:
 - Users manually track expenses with fields: title, description, category, source, date, and amount
@@ -90,31 +63,4 @@ You have access to the getExpenses tool which allows you to:
 - Format expense data in easy-to-read tables or lists when showing multiple items
 - Provide totals and summaries when relevant
 
-Remember: Your goal is to help users understand their expense history and make informed decisions about their spending patterns.`
-
-		// Create openrouter instance with the appropriate API key
-		const openrouterClient = createOpenRouter({
-			apiKey: finalApiKey,
-		})
-
-		// Stream the response using the AI SDK
-		const result = streamText({
-			// @ts-expect-error OpenRouter model compatibility issue with AI SDK v5
-			model: openrouterClient("anthropic/claude-3.5-sonnet"),
-			system: systemMessage,
-			messages: coreMessages,
-			tools: tools,
-		})
-
-		// Return streaming response compatible with useChat
-		return result.toUIMessageStreamResponse()
-	} catch (error) {
-		console.error("Error in chat API:", error)
-		return new Response("Sorry, I encountered an error processing your request. Please try again.", {
-			status: 500,
-			headers: {
-				"Content-Type": "text/plain; charset=utf-8",
-			},
-		})
-	}
-}
+Remember: Your goal is to help users understand their expense history and make informed decisions about their spending patterns, today is ${new Date().toLocaleDateString()}`
