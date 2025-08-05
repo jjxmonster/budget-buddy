@@ -19,10 +19,7 @@ export const getExpensesTool = tool({
 	inputSchema: getExpensesSchema,
 	execute: async ({ dateFrom, dateTo, category, maxAmount, minAmount }) => {
 		try {
-			console.log("Tool execution started with params:", { dateFrom, dateTo, category, maxAmount, minAmount })
-
 			const expenses = await getExpenses({ dateFrom, dateTo, category, maxAmount, minAmount })
-			console.log("Tool execution completed, found expenses:", expenses?.length || 0)
 
 			const result = {
 				success: true,
@@ -35,10 +32,8 @@ export const getExpensesTool = tool({
 				},
 			}
 
-			console.log("Tool returning result:", JSON.stringify(result, null, 2))
 			return result
 		} catch (error) {
-			console.error("Tool execution error:", error)
 			return {
 				success: false,
 				error: error instanceof Error ? error.message : "Unknown error occurred",

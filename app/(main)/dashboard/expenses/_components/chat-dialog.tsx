@@ -1,9 +1,9 @@
 "use client"
 
 import { useChat } from "@ai-sdk/react"
-import { DefaultChatTransport } from "ai"
+import { DefaultChatTransport, lastAssistantMessageIsCompleteWithToolCalls } from "ai"
 import { Loader2, Send, ThumbsDown, ThumbsUp } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -31,14 +31,28 @@ export function ChatDialog({ open, onClose }: ChatDialogProps) {
 	const [apiKey, setApiKey] = useState("")
 	const [input, setInput] = useState("")
 
-	const { messages, sendMessage, status } = useChat({
+	const { messages, sendMessage, status, setMessages } = useChat({
 		transport: new DefaultChatTransport({
 			api: "/api/chat",
 			body: {
 				apiKey: apiKey || undefined,
 			},
 		}),
-		messages: [
+		sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
+	})
+
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault()
+		if (!input.trim() || status !== "ready") return
+
+		sendMessage({ text: input })
+		setInput("")
+	}
+
+	const handleFeedback = async (_messageId: string, _isPositive: boolean) => {}
+
+	useEffect(() => {
+		setMessages([
 			{
 				id: "1",
 				role: "assistant",
@@ -49,18 +63,8 @@ export function ChatDialog({ open, onClose }: ChatDialogProps) {
 					},
 				],
 			},
-		],
-	})
-
-	const handleSubmit = (e: React.FormEvent) => {
-		e.preventDefault()
-		if (!input.trim() || status !== "ready") return
-
-		sendMessage({ text: input })
-		setInput("")
-	}
-
-	const handleFeedback = async (_messageId: string, _isPositive: boolean) => {}
+		])
+	}, [])
 
 	return (
 		<Dialog open={open} onOpenChange={(open) => !open && onClose()}>
@@ -92,97 +96,96 @@ export function ChatDialog({ open, onClose }: ChatDialogProps) {
 							key={message.id}
 							className={cn(
 								"max-w-[80%] rounded-lg",
-								// @ts-expect-error TypeScript false positive on role comparison
 								message.role === "user" ? "bg-primary text-primary-foreground ml-auto p-3" : "mr-auto"
 							)}
 						>
-							{status === "streaming" && message.role === "assistant" && !message.parts?.[0]?.text ? (
-								<div className="bg-muted flex space-x-2 p-3">
-									<Loader2 className="h-4 w-4 animate-spin" />
-									<span>Thinking...</span>
+							<div className="flex flex-col">
+								<div className={cn("p-3", message.role === "assistant" && "bg-muted")}>
+									{message.parts?.map((part: MessagePart, index) => {
+										switch (part.type) {
+											case "text":
+												return <span key={index}>{part.text}</span>
+											case "tool-invocation":
+												if (!part.toolInvocation) return null
+												switch (part.toolInvocation.state) {
+													case "partial-call":
+														return (
+															<div key={index} className="my-1 rounded border border-blue-200 bg-blue-50 p-2">
+																<div className="flex items-center space-x-2">
+																	<Loader2 className="h-3 w-3 animate-spin text-blue-600" />
+																	<span className="text-sm text-blue-800">
+																		Calling {part.toolInvocation.toolName}...
+																	</span>
+																</div>
+															</div>
+														)
+													case "call":
+														return (
+															<div key={index} className="my-1 rounded border border-yellow-200 bg-yellow-50 p-2">
+																<div className="flex items-center space-x-2">
+																	<Loader2 className="h-3 w-3 animate-spin text-yellow-600" />
+																	<span className="text-sm text-yellow-800">
+																		Executing {part.toolInvocation.toolName}...
+																	</span>
+																</div>
+															</div>
+														)
+													case "result":
+														return (
+															<div key={index} className="my-1 rounded border border-green-200 bg-green-50 p-2">
+																<div className="text-sm text-green-800">
+																	<strong>{part.toolInvocation.toolName} completed</strong>
+																	{part.toolInvocation.result && (
+																		<div className="mt-1 text-xs text-green-600">
+																			Found{" "}
+																			{Array.isArray((part.toolInvocation.result as Record<string, unknown>)?.data)
+																				? ((part.toolInvocation.result as Record<string, unknown>).data as unknown[])
+																						.length
+																				: 0}{" "}
+																			expenses
+																		</div>
+																	)}
+																</div>
+															</div>
+														)
+													default:
+														return null
+												}
+											default:
+												return null
+										}
+									})}
 								</div>
-							) : (
-								<div className="flex flex-col">
-									<div className={cn("p-3", message.role === "assistant" && "bg-muted")}>
-										{message.parts?.map((part: MessagePart, index) => {
-											switch (part.type) {
-												case "text":
-													return <span key={index}>{part.text}</span>
-												case "tool-invocation":
-													if (!part.toolInvocation) return null
-													switch (part.toolInvocation.state) {
-														case "partial-call":
-															return (
-																<div key={index} className="my-1 rounded border border-blue-200 bg-blue-50 p-2">
-																	<div className="flex items-center space-x-2">
-																		<Loader2 className="h-3 w-3 animate-spin text-blue-600" />
-																		<span className="text-sm text-blue-800">
-																			Calling {part.toolInvocation.toolName}...
-																		</span>
-																	</div>
-																</div>
-															)
-														case "call":
-															return (
-																<div key={index} className="my-1 rounded border border-yellow-200 bg-yellow-50 p-2">
-																	<div className="flex items-center space-x-2">
-																		<Loader2 className="h-3 w-3 animate-spin text-yellow-600" />
-																		<span className="text-sm text-yellow-800">
-																			Executing {part.toolInvocation.toolName}...
-																		</span>
-																	</div>
-																</div>
-															)
-														case "result":
-															return (
-																<div key={index} className="my-1 rounded border border-green-200 bg-green-50 p-2">
-																	<div className="text-sm text-green-800">
-																		<strong>{part.toolInvocation.toolName} completed</strong>
-																		{part.toolInvocation.result && (
-																			<div className="mt-1 text-xs text-green-600">
-																				Found{" "}
-																				{Array.isArray((part.toolInvocation.result as Record<string, unknown>)?.data)
-																					? ((part.toolInvocation.result as Record<string, unknown>).data as unknown[])
-																							.length
-																					: 0}{" "}
-																				expenses
-																			</div>
-																		)}
-																	</div>
-																</div>
-															)
-														default:
-															return null
-													}
-												default:
-													return null
-											}
-										})}
-									</div>
 
-									{message.role === "assistant" && message.parts?.some((part) => part.type === "text" && part.text) && (
-										<div className="flex justify-end space-x-2 p-2">
-											<span className="text-muted-foreground mr-2 text-xs">Was this helpful?</span>
-											<Button
-												variant="ghost"
-												size="icon"
-												className="h-6 w-6"
-												onClick={() => handleFeedback(message.id, true)}
-											>
-												<ThumbsUp className="h-3 w-3" />
-											</Button>
-											<Button
-												variant="ghost"
-												size="icon"
-												className="h-6 w-6"
-												onClick={() => handleFeedback(message.id, false)}
-											>
-												<ThumbsDown className="h-3 w-3" />
-											</Button>
+								{status === "streaming" &&
+									message.role === "assistant" &&
+									messages.indexOf(message) === messages.length - 1 && (
+										<div className="bg-muted flex space-x-2 p-3">
+											<Loader2 className="h-4 w-4 animate-spin" />
 										</div>
 									)}
-								</div>
-							)}
+								{message.role === "assistant" && message.parts?.some((part) => part.type === "text" && part.text) && (
+									<div className="flex justify-end space-x-2 p-2">
+										<span className="text-muted-foreground mr-2 text-xs">Was this helpful?</span>
+										<Button
+											variant="ghost"
+											size="icon"
+											className="h-6 w-6"
+											onClick={() => handleFeedback(message.id, true)}
+										>
+											<ThumbsUp className="h-3 w-3" />
+										</Button>
+										<Button
+											variant="ghost"
+											size="icon"
+											className="h-6 w-6"
+											onClick={() => handleFeedback(message.id, false)}
+										>
+											<ThumbsDown className="h-3 w-3" />
+										</Button>
+									</div>
+								)}
+							</div>
 						</div>
 					))}
 				</div>
@@ -195,9 +198,9 @@ export function ChatDialog({ open, onClose }: ChatDialogProps) {
 							onChange={(e) => setInput(e.target.value)}
 							placeholder="Type your message..."
 							className="flex-1"
-							disabled={status !== "ready"}
+							disabled={status === "streaming"}
 						/>
-						<Button type="submit" disabled={status !== "ready" || !input.trim()}>
+						<Button type="submit" disabled={status === "streaming" || !input.trim()}>
 							{status === "streaming" || status === "submitted" ? (
 								<Loader2 className="h-4 w-4 animate-spin" />
 							) : (

@@ -1,15 +1,4 @@
-"use server"
-
-import { createOpenRouter } from "@openrouter/ai-sdk-provider"
-import { convertToModelMessages, streamText, UIMessage } from "ai"
-import { env } from "@/env.mjs"
-import getTools from "@/utils/ai-tools"
-
-export const openrouter = createOpenRouter({
-	apiKey: env.OPENROUTER_API_KEY,
-})
-
-const SYSTEM_PROMPT = `You are Budget Buddy, an AI assistant for a personal expense management application. Your primary role is to help users understand and analyze their financial data by answering questions about their expense history.
+export const AI_ASSISTANT_SYSTEM_PROMPT = `You are Budget Buddy, an AI assistant for a personal expense management application. Your primary role is to help users understand and analyze their financial data by answering questions about their expense history.
 
 ## About Budget Buddy Application:
 - Users manually track expenses with fields: title, description, category, source, date, and amount
@@ -46,33 +35,6 @@ You have access to the getExpenses tool which allows you to:
 - When users ask vague questions, ask clarifying questions to provide better assistance
 - Format expense data in easy-to-read tables or lists when showing multiple items
 - Provide totals and summaries when relevant
+- Response should be short and concise, and should not be more than 100 words
 
-Remember: Your goal is to help users understand their expense history and make informed decisions about their spending patterns.`
-
-export const genAIResponse = async (data: { messages: UIMessage[] }) => {
-	const messages = data.messages
-
-	const tools = await getTools()
-
-	// Convert UI messages to model messages
-	const coreMessages = convertToModelMessages(messages)
-
-	try {
-		const result = streamText({
-			model: openrouter("anthropic/claude-3-5-sonnet"),
-			messages: coreMessages,
-			system: SYSTEM_PROMPT,
-			tools,
-		})
-
-		return result.toUIMessageStreamResponse()
-	} catch (error) {
-		console.error("Error in genAIResponse:", error)
-		if (error instanceof Error && error.message.includes("rate limit")) {
-			return { error: "Rate limit exceeded. Please try again in a moment." }
-		}
-		return {
-			error: error instanceof Error ? error.message : "Failed to get AI response",
-		}
-	}
-}
+Remember: Your goal is to help users understand their expense history and make informed decisions about their spending patterns, today is ${new Date().toLocaleDateString()}`
