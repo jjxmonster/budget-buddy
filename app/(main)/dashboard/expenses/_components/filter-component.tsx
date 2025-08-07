@@ -32,6 +32,8 @@ interface FilterComponentProps {
 
 export function FilterComponent({ onFilterChange }: FilterComponentProps) {
 	const [filter, setFilter] = useState<ExpenseFilter>({
+		date_from: undefined,
+		date_to: undefined,
 		sort_by: "date",
 		order: "desc",
 	})
@@ -89,6 +91,8 @@ export function FilterComponent({ onFilterChange }: FilterComponentProps) {
 	// Clear all filters
 	const clearFilters = () => {
 		setFilter({
+			date_from: undefined,
+			date_to: undefined,
 			sort_by: "date",
 			order: "desc",
 		})

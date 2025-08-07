@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient } from "@/db/supabase.client"
+import { GetExpensesInput } from "@/utils/ai-tools"
 
 /**
  * Get a Supabase client instance with service role key for admin operations
@@ -15,6 +16,45 @@ export async function getServiceClient() {
 export async function getCurrentUser() {
 	const supabase = await createClient()
 	return supabase.auth.getUser()
+}
+
+export async function getExpenses(params: GetExpensesInput) {
+	const supabase = await createClient()
+	const { data: user } = await supabase.auth.getUser()
+
+	if (!user.user) {
+		throw new Error("User not found")
+	}
+
+	const query = supabase
+		.from("expense")
+		.select("*, category:category_id(name), source:source_id(name)")
+		.eq("user_id", user.user?.id)
+
+	if (params.dateFrom) {
+		query.gte("date", params.dateFrom)
+	}
+
+	if (params.dateTo) {
+		query.lte("date", params.dateTo)
+	}
+
+	if (params.category) {
+		query.eq("category_id", params.category)
+	}
+
+	if (params.maxAmount) {
+		query.lte("amount", params.maxAmount)
+	}
+
+	if (params.minAmount) {
+		query.gte("amount", params.minAmount)
+	}
+
+	const { data, error } = await query
+
+	if (error) throw error
+	return data
 }
 
 export async function executeQuery(query: string, userId: string) {

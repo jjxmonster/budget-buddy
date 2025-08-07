@@ -19,6 +19,8 @@ export function ExpenseTable({ onEdit, onDelete }: ExpenseTableProps) {
 	const [filter, setFilter] = useState<ExpenseFilter>({
 		sort_by: "date",
 		order: "desc",
+		date_from: undefined,
+		date_to: undefined,
 	})
 	const [currentPage, setCurrentPage] = useState(1)
 	const pageSize = 10

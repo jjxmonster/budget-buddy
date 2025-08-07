@@ -1,7 +1,6 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { processAIAssistantMessage, recordAssistantFeedback } from "@/actions/ai-assistant-actions"
 import { Message } from "@/types/openrouter.types"
 
 export type ChatMessage = {
@@ -26,17 +25,57 @@ export async function sendChatMessage(userMessage: string, chatHistory: ChatMess
 				content: msg.content,
 			}))
 
-		// Process the message
-		const response = await processAIAssistantMessage(userMessage, serviceMessages, false, apiKey)
+		// Add the new user message
+		serviceMessages.push({
+			role: "user",
+			content: userMessage,
+		})
+
+		// Call our chat API route
+		const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/chat`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				messages: serviceMessages,
+				apiKey: apiKey,
+			}),
+		})
+
+		if (!response.ok) {
+			const errorData = await response.json().catch(() => ({}))
+			throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
+		}
+
+		// Handle streaming response
+		const reader = response.body?.getReader()
+		if (!reader) {
+			throw new Error("No response body")
+		}
+
+		let content = ""
+		const decoder = new TextDecoder()
+
+		try {
+			while (true) {
+				const { done, value } = await reader.read()
+				if (done) break
+
+				const chunk = decoder.decode(value, { stream: true })
+				content += chunk
+			}
+		} finally {
+			reader.releaseLock()
+		}
 
 		// Return the message in the format expected by the UI
 		return {
 			success: true,
 			message: {
-				id: Math.floor(Math.random() * 1000000), // This would normally be the feedback ID from DB
+				id: Math.floor(Math.random() * 1000000),
 				role: "assistant" as const,
-				content: response.content,
-				error: response.error,
+				content: content,
 				needsFeedback: true,
 			},
 		}
@@ -58,9 +97,10 @@ export async function sendChatMessage(userMessage: string, chatHistory: ChatMess
  */
 export async function submitFeedback(messageId: number, isPositive: boolean) {
 	try {
-		const result = await recordAssistantFeedback(messageId, isPositive ? 1 : -1)
+		// For now, just log the feedback - you can implement database storage later
+		console.log(`Feedback received for message ${messageId}: ${isPositive ? "positive" : "negative"}`)
 		revalidatePath("/dashboard/expenses")
-		return { success: result.success }
+		return { success: true }
 	} catch (error) {
 		console.error("Error submitting feedback:", error)
 		return { success: false }
