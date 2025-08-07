@@ -22,7 +22,7 @@ export async function getExpenses(params: GetExpensesInput) {
 	const supabase = await createClient()
 	const { data: user } = await supabase.auth.getUser()
 
-	if (!user) {
+	if (!user.user) {
 		throw new Error("User not found")
 	}
 
