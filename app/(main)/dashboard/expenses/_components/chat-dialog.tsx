@@ -3,7 +3,7 @@
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport, lastAssistantMessageIsCompleteWithToolCalls } from "ai"
 import { Loader2, Send, ThumbsDown, ThumbsUp } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -30,6 +30,7 @@ interface MessagePart {
 export function ChatDialog({ open, onClose }: ChatDialogProps) {
 	const [apiKey, setApiKey] = useState("")
 	const [input, setInput] = useState("")
+	const messagesEndRef = useRef<HTMLDivElement>(null)
 
 	const { messages, sendMessage, status, setMessages } = useChat({
 		transport: new DefaultChatTransport({
@@ -51,6 +52,10 @@ export function ChatDialog({ open, onClose }: ChatDialogProps) {
 
 	const handleFeedback = async (_messageId: string, _isPositive: boolean) => {}
 
+	const scrollToBottom = () => {
+		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+	}
+
 	useEffect(() => {
 		setMessages([
 			{
@@ -65,6 +70,10 @@ export function ChatDialog({ open, onClose }: ChatDialogProps) {
 			},
 		])
 	}, [])
+
+	useEffect(() => {
+		scrollToBottom()
+	}, [messages])
 
 	return (
 		<Dialog open={open} onOpenChange={(open) => !open && onClose()}>
@@ -94,100 +103,105 @@ export function ChatDialog({ open, onClose }: ChatDialogProps) {
 					{messages.map((message) => (
 						<div
 							key={message.id}
-							className={cn(
-								"max-w-[80%] rounded-lg",
-								message.role === "user" ? "bg-primary text-primary-foreground ml-auto p-3" : "mr-auto"
-							)}
+							className={cn("max-w-[80%] space-y-2", message.role === "user" ? "ml-auto" : "mr-auto")}
 						>
-							<div className="flex flex-col">
-								<div className={cn("p-3", message.role === "assistant" && "bg-muted")}>
-									{message.parts?.map((part: MessagePart, index) => {
-										switch (part.type) {
-											case "text":
-												return <span key={index}>{part.text}</span>
-											case "tool-invocation":
-												if (!part.toolInvocation) return null
-												switch (part.toolInvocation.state) {
-													case "partial-call":
-														return (
-															<div key={index} className="my-1 rounded border border-blue-200 bg-blue-50 p-2">
-																<div className="flex items-center space-x-2">
-																	<Loader2 className="h-3 w-3 animate-spin text-blue-600" />
-																	<span className="text-sm text-blue-800">
-																		Calling {part.toolInvocation.toolName}...
-																	</span>
+							{message.parts?.map((part: MessagePart, index) => {
+								switch (part.type) {
+									case "text":
+										return (
+											<div
+												key={index}
+												className={cn(
+													"rounded-lg p-3",
+													message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
+												)}
+											>
+												<span>{part.text}</span>
+											</div>
+										)
+									case "tool-invocation":
+										if (!part.toolInvocation) return null
+										switch (part.toolInvocation.state) {
+											case "partial-call":
+												return (
+													<div key={index} className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+														<div className="flex items-center space-x-2">
+															<Loader2 className="h-3 w-3 animate-spin text-blue-600" />
+															<span className="text-sm text-blue-800">Calling {part.toolInvocation.toolName}...</span>
+														</div>
+													</div>
+												)
+											case "call":
+												return (
+													<div key={index} className="rounded-lg border border-yellow-200 bg-yellow-50 p-3">
+														<div className="flex items-center space-x-2">
+															<Loader2 className="h-3 w-3 animate-spin text-yellow-600" />
+															<span className="text-sm text-yellow-800">
+																Executing {part.toolInvocation.toolName}...
+															</span>
+														</div>
+													</div>
+												)
+											case "result":
+												return (
+													<div key={index} className="rounded-lg border border-green-200 bg-green-50 p-3">
+														<div className="text-sm text-green-800">
+															<strong>{part.toolInvocation.toolName} completed</strong>
+															{part.toolInvocation.result && (
+																<div className="mt-1 text-xs text-green-600">
+																	Found{" "}
+																	{Array.isArray((part.toolInvocation.result as Record<string, unknown>)?.data)
+																		? ((part.toolInvocation.result as Record<string, unknown>).data as unknown[]).length
+																		: 0}{" "}
+																	expenses
 																</div>
-															</div>
-														)
-													case "call":
-														return (
-															<div key={index} className="my-1 rounded border border-yellow-200 bg-yellow-50 p-2">
-																<div className="flex items-center space-x-2">
-																	<Loader2 className="h-3 w-3 animate-spin text-yellow-600" />
-																	<span className="text-sm text-yellow-800">
-																		Executing {part.toolInvocation.toolName}...
-																	</span>
-																</div>
-															</div>
-														)
-													case "result":
-														return (
-															<div key={index} className="my-1 rounded border border-green-200 bg-green-50 p-2">
-																<div className="text-sm text-green-800">
-																	<strong>{part.toolInvocation.toolName} completed</strong>
-																	{part.toolInvocation.result && (
-																		<div className="mt-1 text-xs text-green-600">
-																			Found{" "}
-																			{Array.isArray((part.toolInvocation.result as Record<string, unknown>)?.data)
-																				? ((part.toolInvocation.result as Record<string, unknown>).data as unknown[])
-																						.length
-																				: 0}{" "}
-																			expenses
-																		</div>
-																	)}
-																</div>
-															</div>
-														)
-													default:
-														return null
-												}
+															)}
+														</div>
+													</div>
+												)
 											default:
 												return null
 										}
-									})}
-								</div>
+									default:
+										return null
+								}
+							})}
 
-								{status === "streaming" &&
-									message.role === "assistant" &&
-									messages.indexOf(message) === messages.length - 1 && (
-										<div className="bg-muted flex space-x-2 p-3">
+							{status === "streaming" &&
+								message.role === "assistant" &&
+								messages.indexOf(message) === messages.length - 1 && (
+									<div className="bg-muted rounded-lg p-3">
+										<div className="flex items-center space-x-2">
 											<Loader2 className="h-4 w-4 animate-spin" />
+											<span className="text-sm">Typing...</span>
 										</div>
-									)}
-								{message.role === "assistant" && message.parts?.some((part) => part.type === "text" && part.text) && (
-									<div className="flex justify-end space-x-2 p-2">
-										<span className="text-muted-foreground mr-2 text-xs">Was this helpful?</span>
-										<Button
-											variant="ghost"
-											size="icon"
-											className="h-6 w-6"
-											onClick={() => handleFeedback(message.id, true)}
-										>
-											<ThumbsUp className="h-3 w-3" />
-										</Button>
-										<Button
-											variant="ghost"
-											size="icon"
-											className="h-6 w-6"
-											onClick={() => handleFeedback(message.id, false)}
-										>
-											<ThumbsDown className="h-3 w-3" />
-										</Button>
 									</div>
 								)}
-							</div>
+
+							{message.role === "assistant" && message.parts?.some((part) => part.type === "text" && part.text) && (
+								<div className="flex justify-end space-x-2 pt-1">
+									<span className="text-muted-foreground mr-2 text-xs">Was this helpful?</span>
+									<Button
+										variant="ghost"
+										size="icon"
+										className="h-6 w-6"
+										onClick={() => handleFeedback(message.id, true)}
+									>
+										<ThumbsUp className="h-3 w-3" />
+									</Button>
+									<Button
+										variant="ghost"
+										size="icon"
+										className="h-6 w-6"
+										onClick={() => handleFeedback(message.id, false)}
+									>
+										<ThumbsDown className="h-3 w-3" />
+									</Button>
+								</div>
+							)}
 						</div>
 					))}
+					<div ref={messagesEndRef} />
 				</div>
 
 				<form onSubmit={handleSubmit} className="border-t p-4">
