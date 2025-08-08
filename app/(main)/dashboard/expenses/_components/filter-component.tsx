@@ -105,6 +105,9 @@ export function FilterComponent({ onFilterChange }: FilterComponentProps) {
 		filter.date_to ||
 		filter.category_id ||
 		filter.source_id ||
+		// Sorting considered active when deviating from defaults
+		(filter.sort_by && filter.sort_by !== "date") ||
+		(filter.order && filter.order !== "desc") ||
 		amountRange[0] > 0 ||
 		amountRange[1] < maxAmount
 
@@ -125,7 +128,8 @@ export function FilterComponent({ onFilterChange }: FilterComponentProps) {
 									(amountRange[0] > 0 || amountRange[1] < maxAmount) && "Amount Range",
 									filter.category_id && "Category",
 									filter.source_id && "Source",
-									filter.sort_by && filter.sort_by !== "date" && "Sorting",
+									((filter.sort_by && filter.sort_by !== "date") || (filter.order && filter.order !== "desc")) &&
+										"Sorting",
 								]
 									.filter(Boolean)
 									.join(" • ") || "None"}
