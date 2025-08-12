@@ -1,7 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { type Resolver, SubmitHandler, useForm } from "react-hook-form"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -24,8 +24,10 @@ type CategoryFormValues = z.infer<typeof categorySchema>
 export function CreateCategoryForm({ onSuccess, onCancel }: CreateCategoryFormProps) {
 	const { createMutation } = useCategoryMutations()
 
-	const form = useForm<CategoryFormValues>({
-		resolver: zodResolver(categorySchema),
+	const resolver: Resolver<CategoryFormValues> = zodResolver(categorySchema) as unknown as Resolver<CategoryFormValues>
+
+	const form = useForm<CategoryFormValues, unknown, CategoryFormValues>({
+		resolver,
 		defaultValues: {
 			name: "",
 		},
@@ -33,7 +35,7 @@ export function CreateCategoryForm({ onSuccess, onCancel }: CreateCategoryFormPr
 
 	const isSubmitting = form.formState.isSubmitting
 
-	async function onSubmit(values: CategoryFormValues) {
+	const onSubmit: SubmitHandler<CategoryFormValues> = async (values) => {
 		const command: CreateCategoryCommand = {
 			...values,
 		}
@@ -52,7 +54,7 @@ export function CreateCategoryForm({ onSuccess, onCancel }: CreateCategoryFormPr
 
 				<Form {...form}>
 					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2" data-testid="create-category-form">
-						<FormField
+						<FormField<CategoryFormValues>
 							control={form.control}
 							name="name"
 							render={({ field }) => (
