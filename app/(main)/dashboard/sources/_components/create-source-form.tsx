@@ -1,7 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { type Resolver, SubmitHandler, useForm } from "react-hook-form"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -24,8 +24,10 @@ type SourceFormValues = z.infer<typeof sourceSchema>
 export function CreateSourceForm({ onSuccess, onCancel }: CreateSourceFormProps) {
 	const { createMutation } = useSourceMutations()
 
-	const form = useForm<SourceFormValues>({
-		resolver: zodResolver(sourceSchema),
+	const resolver: Resolver<SourceFormValues> = zodResolver(sourceSchema) as unknown as Resolver<SourceFormValues>
+
+	const form = useForm<SourceFormValues, unknown, SourceFormValues>({
+		resolver,
 		defaultValues: {
 			name: "",
 		},
@@ -33,7 +35,7 @@ export function CreateSourceForm({ onSuccess, onCancel }: CreateSourceFormProps)
 
 	const isSubmitting = form.formState.isSubmitting
 
-	async function onSubmit(values: SourceFormValues) {
+	const onSubmit: SubmitHandler<SourceFormValues> = async (values) => {
 		const command: CreateSourceCommand = {
 			...values,
 		}
@@ -52,7 +54,7 @@ export function CreateSourceForm({ onSuccess, onCancel }: CreateSourceFormProps)
 
 				<Form {...form}>
 					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2" data-testid="create-source-form">
-						<FormField
+						<FormField<SourceFormValues>
 							control={form.control}
 							name="name"
 							render={({ field }) => (
