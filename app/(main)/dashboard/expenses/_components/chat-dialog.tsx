@@ -148,12 +148,20 @@ export function ChatDialog({ open, onClose }: ChatDialogProps) {
 														<div className="text-sm text-green-800">
 															<strong>{part.toolInvocation.toolName} completed</strong>
 															{part.toolInvocation.result && (
-																<div className="mt-1 text-xs text-green-600">
-																	Found{" "}
-																	{Array.isArray((part.toolInvocation.result as Record<string, unknown>)?.data)
-																		? ((part.toolInvocation.result as Record<string, unknown>).data as unknown[]).length
-																		: 0}{" "}
-																	expenses
+																<div className="mt-1 text-xs">
+																	{(() => {
+																		const res = part.toolInvocation?.result as Record<string, unknown>
+																		if (res?.success === false && res?.error) {
+																			return <span className="text-red-700">Error: {String(res.error)}</span>
+																		}
+																		if (res?.message) {
+																			return <span className="text-green-700">{String(res.message)}</span>
+																		}
+																		if (Array.isArray(res?.data)) {
+																			return <span className="text-green-700">Found {res.data.length} item(s)</span>
+																		}
+																		return null
+																	})()}
 																</div>
 															)}
 														</div>
