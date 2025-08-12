@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useEffect } from "react"
-import { useForm } from "react-hook-form"
+import { type Resolver, SubmitHandler, useForm } from "react-hook-form"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -26,8 +26,10 @@ type CategoryFormValues = z.infer<typeof categorySchema>
 export function EditCategoryForm({ category, onSuccess, onCancel }: EditCategoryFormProps) {
 	const { updateMutation } = useCategoryMutations()
 
-	const form = useForm<CategoryFormValues>({
-		resolver: zodResolver(categorySchema),
+	const resolver: Resolver<CategoryFormValues> = zodResolver(categorySchema) as unknown as Resolver<CategoryFormValues>
+
+	const form = useForm<CategoryFormValues, unknown, CategoryFormValues>({
+		resolver,
 		defaultValues: {
 			name: category.name,
 		},
@@ -42,7 +44,7 @@ export function EditCategoryForm({ category, onSuccess, onCancel }: EditCategory
 
 	const isSubmitting = form.formState.isSubmitting
 
-	function onSubmit(values: CategoryFormValues) {
+	const onSubmit: SubmitHandler<CategoryFormValues> = (values) => {
 		const command: UpdateCategoryCommand = {
 			id: category.id,
 			name: values.name,
@@ -62,7 +64,7 @@ export function EditCategoryForm({ category, onSuccess, onCancel }: EditCategory
 
 				<Form {...form}>
 					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
-						<FormField
+						<FormField<CategoryFormValues>
 							control={form.control}
 							name="name"
 							render={({ field }) => (

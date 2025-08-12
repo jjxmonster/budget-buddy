@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { Calendar as CalendarIcon, Loader2 } from "lucide-react"
 import { useEffect } from "react"
-import { useForm } from "react-hook-form"
+import { type Resolver, useForm } from "react-hook-form"
 import * as z from "zod"
 import { getCategories } from "@/actions/category.actions"
 import { getSources } from "@/actions/source.actions"
@@ -30,8 +30,8 @@ import { cn } from "@/utils/helpers"
 const formSchema = z.object({
 	title: z.string().min(1, "Title is required").max(50, "Title cannot exceed 50 characters"),
 	description: z.string().max(200, "Description cannot exceed 200 characters").optional(),
-	date: z.date({
-		required_error: "Date is required",
+	date: z.date().refine((d) => d instanceof Date && !isNaN(d.getTime()), {
+		message: "Date is required",
 	}),
 	amount: z.coerce.number().positive("Amount must be positive"),
 	category_id: z.number().optional(),
@@ -49,8 +49,9 @@ interface ExpenseFormModalProps {
 }
 
 export function ExpenseFormModal({ open, mode, defaultValues, onClose, onSubmit }: ExpenseFormModalProps) {
-	const form = useForm<ExpenseFormValues>({
-		resolver: zodResolver(formSchema),
+	const resolver: Resolver<ExpenseFormValues> = zodResolver(formSchema) as unknown as Resolver<ExpenseFormValues>
+	const form = useForm<ExpenseFormValues, unknown, ExpenseFormValues>({
+		resolver,
 	})
 	const { data: categories = [], isLoading: isCategoriesLoading } = useQuery({
 		queryKey: ["categories"],
@@ -99,21 +100,29 @@ export function ExpenseFormModal({ open, mode, defaultValues, onClose, onSubmit 
 						className="space-y-4"
 						data-testid="expense-form"
 					>
-						<FormField
+						<FormField<ExpenseFormValues, "title">
 							control={form.control}
 							name="title"
 							render={({ field }) => (
 								<FormItem>
 									<FormLabel>Title</FormLabel>
 									<FormControl>
-										<Input placeholder="Expense title" {...field} data-testid="expense-title-input" />
+										<Input
+											placeholder="Expense title"
+											onChange={field.onChange}
+											onBlur={field.onBlur}
+											name={field.name}
+											ref={field.ref}
+											value={(field.value as string | undefined) ?? ""}
+											data-testid="expense-title-input"
+										/>
 									</FormControl>
 									<FormMessage />
 								</FormItem>
 							)}
 						/>
 
-						<FormField
+						<FormField<ExpenseFormValues, "description">
 							control={form.control}
 							name="description"
 							render={({ field }) => (
@@ -122,8 +131,11 @@ export function ExpenseFormModal({ open, mode, defaultValues, onClose, onSubmit 
 									<FormControl>
 										<Textarea
 											placeholder="Optional description"
-											{...field}
-											value={field.value || ""}
+											onChange={field.onChange}
+											onBlur={field.onBlur}
+											name={field.name}
+											ref={field.ref}
+											value={(field.value as string | undefined) ?? ""}
 											data-testid="expense-description-input"
 										/>
 									</FormControl>
@@ -133,7 +145,7 @@ export function ExpenseFormModal({ open, mode, defaultValues, onClose, onSubmit 
 							)}
 						/>
 
-						<FormField
+						<FormField<ExpenseFormValues, "date">
 							control={form.control}
 							name="date"
 							render={({ field }) => (
@@ -153,7 +165,12 @@ export function ExpenseFormModal({ open, mode, defaultValues, onClose, onSubmit 
 											</FormControl>
 										</PopoverTrigger>
 										<PopoverContent className="w-auto p-0" align="start">
-											<Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+											<Calendar
+												mode="single"
+												selected={field.value as Date | undefined}
+												onSelect={field.onChange}
+												initialFocus
+											/>
 										</PopoverContent>
 									</Popover>
 									<FormMessage />
@@ -161,7 +178,7 @@ export function ExpenseFormModal({ open, mode, defaultValues, onClose, onSubmit 
 							)}
 						/>
 
-						<FormField
+						<FormField<ExpenseFormValues, "amount">
 							control={form.control}
 							name="amount"
 							render={({ field }) => (
@@ -172,10 +189,13 @@ export function ExpenseFormModal({ open, mode, defaultValues, onClose, onSubmit 
 											type="number"
 											step="0.01"
 											placeholder="0.00"
-											{...field}
 											onChange={(e) => {
 												field.onChange(e.target.valueAsNumber)
 											}}
+											onBlur={field.onBlur}
+											name={field.name}
+											ref={field.ref}
+											value={field.value as number | undefined}
 											data-testid="expense-amount-input"
 										/>
 									</FormControl>
@@ -185,7 +205,7 @@ export function ExpenseFormModal({ open, mode, defaultValues, onClose, onSubmit 
 						/>
 
 						<div className="grid grid-cols-2 gap-4">
-							<FormField
+							<FormField<ExpenseFormValues, "category_id">
 								control={form.control}
 								name="category_id"
 								render={({ field }) => (
@@ -214,7 +234,7 @@ export function ExpenseFormModal({ open, mode, defaultValues, onClose, onSubmit 
 								)}
 							/>
 
-							<FormField
+							<FormField<ExpenseFormValues, "source_id">
 								control={form.control}
 								name="source_id"
 								render={({ field }) => (

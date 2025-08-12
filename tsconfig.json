@@ -36,7 +36,8 @@
 		"jest.config.js",
 		".next/types/**/*.ts",
 		"eslint.config.mjs",
-		"vitest.config.mts"
+		"vitest.config.mts",
+		"playwright.config.ts"
 	],
 	"exclude": ["node_modules"]
 }

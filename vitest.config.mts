@@ -4,6 +4,7 @@ import { defineConfig } from "vitest/config"
 import { resolve } from "path"
 
 export default defineConfig({
+	// @ts-expect-error: Suppress cross-version Vite plugin typing mismatch; runtime is correct
 	plugins: [tsconfigPaths(), react()],
 	test: {
 		environment: "jsdom",

@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import * as React from "react"
-import { useForm } from "react-hook-form"
+import { type Resolver, SubmitHandler, useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { AuthForm } from "@/components/auth/auth-form"
 import { Button } from "@/components/ui/button"
@@ -14,8 +14,10 @@ import { type RegisterFormData, registerSchema } from "@/lib/validations/auth"
 import { register } from "../actions"
 
 export function RegisterForm() {
-	const form = useForm<RegisterFormData>({
-		resolver: zodResolver(registerSchema),
+	const resolver: Resolver<RegisterFormData> = zodResolver(registerSchema) as unknown as Resolver<RegisterFormData>
+
+	const form = useForm<RegisterFormData, unknown, RegisterFormData>({
+		resolver,
 		defaultValues: {
 			email: "",
 			password: "",
@@ -23,7 +25,7 @@ export function RegisterForm() {
 		},
 	})
 
-	async function onSubmit(data: RegisterFormData) {
+	const onSubmit: SubmitHandler<RegisterFormData> = async (data) => {
 		const formData = new FormData()
 		formData.append("email", data.email)
 		formData.append("password", data.password)
@@ -65,7 +67,7 @@ export function RegisterForm() {
 		>
 			<Form {...form}>
 				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-					<FormField
+					<FormField<RegisterFormData>
 						control={form.control}
 						name="email"
 						render={({ field }) => (
@@ -77,7 +79,7 @@ export function RegisterForm() {
 							</FormItem>
 						)}
 					/>
-					<FormField
+					<FormField<RegisterFormData>
 						control={form.control}
 						name="password"
 						render={({ field }) => (
@@ -89,7 +91,7 @@ export function RegisterForm() {
 							</FormItem>
 						)}
 					/>
-					<FormField
+					<FormField<RegisterFormData>
 						control={form.control}
 						name="confirmPassword"
 						render={({ field }) => (

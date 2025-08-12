@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import * as React from "react"
-import { useForm } from "react-hook-form"
+import { type Resolver, SubmitHandler, useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { AuthForm } from "@/components/auth/auth-form"
 import { Button } from "@/components/ui/button"
@@ -15,8 +15,10 @@ import { type LoginFormData, loginSchema } from "@/lib/validations/auth"
 import { login } from "../actions"
 
 export function LoginForm() {
-	const form = useForm<LoginFormData>({
-		resolver: zodResolver(loginSchema),
+	const resolver: Resolver<LoginFormData> = zodResolver(loginSchema) as unknown as Resolver<LoginFormData>
+
+	const form = useForm<LoginFormData, unknown, LoginFormData>({
+		resolver,
 		defaultValues: {
 			email: "",
 			password: "",
@@ -24,7 +26,7 @@ export function LoginForm() {
 	})
 	const { setUser } = useAuthStore()
 
-	async function onSubmit(data: LoginFormData) {
+	const onSubmit: SubmitHandler<LoginFormData> = async (data) => {
 		const formData = new FormData()
 		formData.append("email", data.email)
 		formData.append("password", data.password)
@@ -72,7 +74,7 @@ export function LoginForm() {
 		>
 			<Form {...form}>
 				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-					<FormField
+					<FormField<LoginFormData>
 						control={form.control}
 						name="email"
 						render={({ field }) => (
@@ -91,7 +93,7 @@ export function LoginForm() {
 							</FormItem>
 						)}
 					/>
-					<FormField
+					<FormField<LoginFormData>
 						control={form.control}
 						name="password"
 						render={({ field }) => (
