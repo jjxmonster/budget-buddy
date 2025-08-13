@@ -63,7 +63,7 @@ export function ExpenseTable({ onEdit, onDelete }: ExpenseTableProps) {
 		<div className="space-y-4" data-testid="expense-table-container">
 			<FilterComponent onFilterChange={handleFilterChange} />
 
-			<div className="rounded-md border">
+			<div className="overflow-hidden rounded-lg border p-2 sm:p-3 md:p-4">
 				<Table>
 					<TableHeader>
 						<TableRow>

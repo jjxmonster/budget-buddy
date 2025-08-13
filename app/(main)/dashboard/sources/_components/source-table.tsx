@@ -15,7 +15,7 @@ interface SourceTableProps {
 export function SourceTable({ sources, isLoading = false, onEdit, onDelete }: SourceTableProps) {
 	if (isLoading) {
 		return (
-			<div className="rounded-md border">
+			<div className="overflow-hidden rounded-lg border p-2 sm:p-3 md:p-4">
 				<Table>
 					<TableHeader>
 						<TableRow>
@@ -50,7 +50,7 @@ export function SourceTable({ sources, isLoading = false, onEdit, onDelete }: So
 	}
 
 	return (
-		<div className="rounded-md border">
+		<div className="overflow-hidden rounded-lg border p-2 sm:p-3 md:p-4">
 			<Table>
 				<TableHeader>
 					<TableRow>
