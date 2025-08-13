@@ -15,7 +15,7 @@ interface CategoryTableProps {
 export function CategoryTable({ categories, isLoading = false, onEdit, onDelete }: CategoryTableProps) {
 	if (isLoading) {
 		return (
-			<div className="rounded-md border">
+			<div className="overflow-hidden rounded-lg border p-2 sm:p-3 md:p-4">
 				<Table>
 					<TableHeader>
 						<TableRow>
@@ -50,7 +50,7 @@ export function CategoryTable({ categories, isLoading = false, onEdit, onDelete 
 	}
 
 	return (
-		<div className="rounded-md border" data-testid="categories-table-container">
+		<div className="overflow-hidden rounded-lg border p-2 sm:p-3 md:p-4" data-testid="categories-table-container">
 			<Table>
 				<TableHeader>
 					<TableRow>
