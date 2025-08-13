@@ -16,6 +16,11 @@ interface SidebarItem {
 
 const sidebarItems: SidebarItem[] = [
 	{
+		name: "Dashboard",
+		href: "/dashboard",
+		icon: LayoutDashboard,
+	},
+	{
 		name: "Expenses",
 		href: "/dashboard/expenses",
 		icon: Receipt,
