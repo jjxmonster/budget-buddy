@@ -45,6 +45,7 @@ interface RechartsPayloadItem {
 	color?: string
 	name?: string
 	value?: number | string
+	payload?: Record<string, unknown>
 }
 
 type ChartTooltipContentProps = {
@@ -72,15 +73,22 @@ function ChartTooltipContent({
 		<div className={cn("bg-popover text-popover-foreground rounded-md border p-2 shadow-md", className)}>
 			{!hideLabel && <div className="text-muted-foreground mb-1 text-xs">{formattedLabel}</div>}
 			<div className="space-y-0.5">
-				{payload.map((entry: RechartsPayloadItem, idx: number) => (
-					<div key={idx} className="flex items-center justify-between gap-6 text-sm">
-						<span className="flex items-center gap-2">
-							<span className="inline-block h-2 w-2 rounded-sm" style={{ background: entry.color }} />
-							{nameKey ? (entry.name === nameKey ? entry.name : entry.name) : entry.name}
-						</span>
-						<span className="font-medium">{entry.value?.toLocaleString?.() ?? entry.value}</span>
-					</div>
-				))}
+				{payload.map((entry: RechartsPayloadItem, idx: number) => {
+					// Prefer a custom field from the datum when nameKey is provided; fallback to entry.name
+					const payloadName =
+						nameKey && entry?.payload && entry.payload[nameKey] != null
+							? String(entry.payload[nameKey] as unknown as string)
+							: entry.name
+					return (
+						<div key={idx} className="flex items-center justify-between gap-6 text-sm">
+							<span className="flex items-center gap-2">
+								<span className="inline-block h-2 w-2 rounded-sm" style={{ background: entry.color }} />
+								{payloadName}
+							</span>
+							<span className="font-medium">{entry.value?.toLocaleString?.() ?? entry.value}</span>
+						</div>
+					)
+				})}
 			</div>
 		</div>
 	)
