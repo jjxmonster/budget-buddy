@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Bar, BarChart, CartesianGrid, Pie, PieChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
+import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
 import type { CategoryCountDto, DailyTotalDto, RecentExpenseDto } from "@/actions/dashboard.actions"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
@@ -13,9 +13,8 @@ type DashboardOverviewProps = {
 	recentExpenses: RecentExpenseDto[]
 }
 
-// colors used to decorate Pie slices consistently with theme tokens
-
-const COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"]
+// single primary color; shades handled via Cell fillOpacity
+const PRIMARY_COLOR = "var(--primary)"
 
 const barChartConfig = {
 	amount: {
@@ -85,15 +84,18 @@ export default function DashboardOverview({ dailyTotals, categoryCounts, recentE
 							}}
 							className="mx-auto aspect-square max-h-[260px]"
 						>
-							<PieChart>
-								<ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel className="w-[160px]" />} />
-								<Pie
-									data={categoryCounts.map((d, i) => ({ ...d, fill: COLORS[i % COLORS.length] }))}
-									dataKey="value"
-									nameKey="name"
-									stroke="0"
-								/>
-							</PieChart>
+							<ResponsiveContainer width="100%" height="100%">
+								<PieChart>
+									<ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel className="w-[160px]" />} />
+									<Pie data={categoryCounts} dataKey="value" nameKey="name" stroke="0">
+										{categoryCounts.map((_, i) => {
+											const steps = Math.max(1, categoryCounts.length - 1)
+											const opacity = steps === 0 ? 0.9 : 0.35 + (0.6 * i) / steps
+											return <Cell key={`cell-${i}`} fill={PRIMARY_COLOR} fillOpacity={opacity} />
+										})}
+									</Pie>
+								</PieChart>
+							</ResponsiveContainer>
 						</ChartContainer>
 					</CardContent>
 				</Card>
