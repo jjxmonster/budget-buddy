@@ -35,9 +35,6 @@ export function ChatDialog({ open, onClose }: ChatDialogProps) {
 	const { messages, sendMessage, status, setMessages } = useChat({
 		transport: new DefaultChatTransport({
 			api: "/api/chat",
-			body: {
-				apiKey: apiKey || undefined,
-			},
 		}),
 		sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
 	})
@@ -46,7 +43,14 @@ export function ChatDialog({ open, onClose }: ChatDialogProps) {
 		e.preventDefault()
 		if (!input.trim() || status !== "ready") return
 
-		sendMessage({ text: input })
+		sendMessage(
+			{ text: input },
+			{
+				body: {
+					apiKey: apiKey || undefined,
+				},
+			}
+		)
 		setInput("")
 	}
 
