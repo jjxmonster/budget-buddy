@@ -7,6 +7,7 @@
 - [Getting Started Locally](#getting-started-locally)
 - [Available Scripts](#available-scripts)
 - [Project Scope](#project-scope)
+- [Screenshots](#screenshots)
 - [Project Status](#project-status)
 - [License](#license)
 
@@ -23,6 +24,7 @@ BudgetBuddy is an intuitive expense management application that allows users to 
 - TypeScript 5
 - Tailwind CSS 4
 - shadcn/ui
+- AI SDk
 
 **Backend:**
 
@@ -68,6 +70,28 @@ BudgetBuddy is designed to provide a comprehensive solution for managing persona
 - **Category & Source Management:** Organize expenses by managing custom categories and sources.
 - **AI Assistant:** Interact with an AI-powered assistant for real-time insights into expense history.
 - **Secure Access:** Ensure that users have private and secure access to their financial data.
+
+## Screenshots
+
+### Landing Page
+
+![Landing Page](images/landing.jpeg)
+_Welcome screen showcasing the application's main features and benefits_
+
+### Dashboard Overview
+
+![Dashboard with Charts](images/dashboard-with-charts.jpeg)
+_Main dashboard view with expense analytics and visual charts for better financial insights_
+
+### Expense Management
+
+![Expenses List with Filters](images/expenses-list-with-filters.jpeg)
+_Comprehensive expense list with advanced filtering options to easily track and manage your spending_
+
+### AI Assistant
+
+![AI Assistant Chat](images/ai-assistant-chat.jpeg)
+_Interactive AI-powered assistant providing real-time insights and answering questions about your expense history_
 
 ## Project Status
 
