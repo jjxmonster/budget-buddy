@@ -24,11 +24,14 @@ BudgetBuddy is an intuitive expense management application that allows users to 
 - TypeScript 5
 - Tailwind CSS 4
 - shadcn/ui
-- AI SDk
+- AI SDK
 
 **Backend:**
 
 - Supabase
+
+**Architecture Diagram**
+![Diagram](images/architecture.png)
 
 **AI Integration:**
 
