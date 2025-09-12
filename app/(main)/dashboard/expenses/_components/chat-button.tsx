@@ -19,7 +19,7 @@ export function ChatButton() {
 				<MessageCircle className="h-5 w-5" />
 			</Button>
 
-			<ChatDialog open={isOpen} onClose={() => setIsOpen(false)} />
+			<ChatDialog open={isOpen} onCloseAction={() => setIsOpen(false)} />
 		</>
 	)
 }

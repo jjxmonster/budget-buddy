@@ -2,8 +2,9 @@
 
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport, lastAssistantMessageIsCompleteWithToolCalls } from "ai"
-import { Loader2, Send, ThumbsDown, ThumbsUp } from "lucide-react"
+import { Loader2, Mic, Send, Square, ThumbsDown, ThumbsUp } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
+import { transcribeAudio } from "@/actions/transcription.actions"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
@@ -12,7 +13,7 @@ import { cn } from "@/utils/helpers"
 
 interface ChatDialogProps {
 	open: boolean
-	onClose: () => void
+	onCloseAction: () => void
 }
 
 interface MessagePart {
@@ -27,10 +28,14 @@ interface MessagePart {
 	}
 }
 
-export function ChatDialog({ open, onClose }: ChatDialogProps) {
+export function ChatDialog({ open, onCloseAction }: ChatDialogProps) {
 	const [apiKey, setApiKey] = useState("")
 	const [input, setInput] = useState("")
+	const [isRecording, setIsRecording] = useState(false)
+	const [recordingError, setRecordingError] = useState<string | null>(null)
 	const messagesEndRef = useRef<HTMLDivElement>(null)
+	const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+	const recordedChunksRef = useRef<BlobPart[]>([])
 
 	const { messages, sendMessage, status, setMessages } = useChat({
 		transport: new DefaultChatTransport({
@@ -52,6 +57,87 @@ export function ChatDialog({ open, onClose }: ChatDialogProps) {
 			}
 		)
 		setInput("")
+	}
+
+	const startRecording = async () => {
+		try {
+			setRecordingError(null)
+			if (!navigator.mediaDevices?.getUserMedia) {
+				setRecordingError("Microphone not supported in this browser.")
+				return
+			}
+			const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+			const mimeTypeOptions = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", "audio/mp4"]
+			const mimeType = mimeTypeOptions.find((t) => MediaRecorder.isTypeSupported(t)) || "audio/webm"
+			const mediaRecorder = new MediaRecorder(stream, { mimeType })
+			mediaRecorderRef.current = mediaRecorder
+			recordedChunksRef.current = []
+			mediaRecorder.ondataavailable = (e) => {
+				if (e.data && e.data.size > 0) {
+					recordedChunksRef.current.push(e.data)
+				}
+			}
+			mediaRecorder.onstop = async () => {
+				try {
+					const blob = new Blob(recordedChunksRef.current, { type: mimeType })
+					const arrayBuffer = await blob.arrayBuffer()
+					const bytes = new Uint8Array(arrayBuffer)
+					let binary = ""
+					for (let i = 0; i < bytes.length; i++) {
+						binary += String.fromCharCode(bytes[i]!)
+					}
+					const base64 = btoa(binary)
+
+					const result = await transcribeAudio({
+						audioBase64: base64,
+						mimeType,
+						diarize: true,
+						tagAudioEvents: true,
+					})
+					if (!result.success) {
+						setRecordingError(result.error || "Transcription failed")
+						return
+					}
+					const text = result.text || ""
+					if (text) {
+						const combined = input ? `${input} ${text}` : text
+						if (status === "ready") {
+							sendMessage(
+								{ text: combined },
+								{
+									body: {
+										apiKey: apiKey || undefined,
+									},
+								}
+							)
+							setInput("")
+						} else {
+							setInput(combined)
+						}
+					}
+				} catch (err) {
+					setRecordingError(err instanceof Error ? err.message : "Recording stopped with error")
+				} finally {
+					setIsRecording(false)
+					mediaRecorderRef.current?.stream.getTracks().forEach((t) => t.stop())
+					mediaRecorderRef.current = null
+				}
+			}
+			mediaRecorder.start()
+			setIsRecording(true)
+		} catch (error) {
+			setRecordingError(error instanceof Error ? error.message : "Failed to start recording")
+		}
+	}
+
+	const stopRecording = () => {
+		try {
+			mediaRecorderRef.current?.stop()
+		} catch (error) {
+			setRecordingError(error instanceof Error ? error.message : "Failed to stop recording")
+		} finally {
+			setIsRecording(false)
+		}
 	}
 
 	const handleFeedback = async (_messageId: string, _isPositive: boolean) => {}
@@ -80,7 +166,7 @@ export function ChatDialog({ open, onClose }: ChatDialogProps) {
 	}, [messages])
 
 	return (
-		<Dialog open={open} onOpenChange={(open) => !open && onClose()}>
+		<Dialog open={open} onOpenChange={(open) => !open && onCloseAction()}>
 			<DialogContent className="flex h-[600px] flex-col gap-0 p-0 sm:max-w-md">
 				<div className="flex items-center justify-between border-b p-4">
 					<DialogTitle className="text-lg font-semibold">Budget Buddy Assistant</DialogTitle>
@@ -218,6 +304,17 @@ export function ChatDialog({ open, onClose }: ChatDialogProps) {
 
 				<form onSubmit={handleSubmit} className="border-t p-4">
 					<div className="flex gap-2">
+						<Button
+							type="button"
+							variant={isRecording ? "destructive" : "secondary"}
+							size="icon"
+							onClick={isRecording ? stopRecording : startRecording}
+							title={isRecording ? "Stop recording" : "Start recording"}
+							aria-label={isRecording ? "Stop recording" : "Start recording"}
+							disabled={status === "streaming"}
+						>
+							{isRecording ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+						</Button>
 						<Input
 							type="text"
 							value={input}
@@ -234,6 +331,11 @@ export function ChatDialog({ open, onClose }: ChatDialogProps) {
 							)}
 						</Button>
 					</div>
+					{recordingError && (
+						<p className="text-destructive mt-2 text-xs" role="alert">
+							{recordingError}
+						</p>
+					)}
 				</form>
 			</DialogContent>
 		</Dialog>
