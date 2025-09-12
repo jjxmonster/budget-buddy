@@ -178,6 +178,7 @@ export function ChatDialog({ open, onCloseAction }: ChatDialogProps) {
 							OpenRouter API Key
 						</Label>
 						<Input
+							autoComplete="off"
 							id="api-key"
 							type="password"
 							value={apiKey}
