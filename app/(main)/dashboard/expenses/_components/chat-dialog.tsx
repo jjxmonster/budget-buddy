@@ -2,13 +2,15 @@
 
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport, lastAssistantMessageIsCompleteWithToolCalls } from "ai"
-import { Loader2, Mic, Send, Square, ThumbsDown, ThumbsUp } from "lucide-react"
+import { Loader2, Mic, Send, Square, ThumbsDown, ThumbsUp, Volume2 } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { transcribeAudio } from "@/actions/transcription.actions"
+import { synthesizeSpeech } from "@/actions/tts.actions"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
 import { cn } from "@/utils/helpers"
 
 interface ChatDialogProps {
@@ -28,14 +30,25 @@ interface MessagePart {
 	}
 }
 
+interface UiMessage {
+	id: string
+	role: "user" | "assistant" | "system"
+	parts?: Array<{ type: string; text?: string; [key: string]: unknown }>
+}
+
 export function ChatDialog({ open, onCloseAction }: ChatDialogProps) {
 	const [apiKey, setApiKey] = useState("")
 	const [input, setInput] = useState("")
+	const [voiceEnabled, setVoiceEnabled] = useState(false)
 	const [isRecording, setIsRecording] = useState(false)
 	const [recordingError, setRecordingError] = useState<string | null>(null)
 	const messagesEndRef = useRef<HTMLDivElement>(null)
 	const mediaRecorderRef = useRef<MediaRecorder | null>(null)
 	const recordedChunksRef = useRef<BlobPart[]>([])
+	const isSpeakingRef = useRef(false)
+	const audioRef = useRef<HTMLAudioElement | null>(null)
+	// Track spoken parts using a composite key: `${message.id}:${partIndex}`
+	const spokenPartKeysRef = useRef<Set<string>>(new Set())
 
 	const { messages, sendMessage, status, setMessages } = useChat({
 		transport: new DefaultChatTransport({
@@ -165,6 +178,88 @@ export function ChatDialog({ open, onCloseAction }: ChatDialogProps) {
 		scrollToBottom()
 	}, [messages])
 
+	const getAssistantTextParts = (message: UiMessage): string[] => {
+		if (!message || message.role !== "assistant") return []
+		return (
+			message.parts
+				?.map((p) => (p?.type === "text" && typeof p?.text === "string" ? (p.text as string) : undefined))
+				.filter((t): t is string => typeof t === "string" && t.trim().length > 0) || []
+		)
+	}
+
+	const playNextSpeech = async () => {
+		if (!voiceEnabled || isSpeakingRef.current || status !== "ready") return
+
+		// Find the next assistant text part that hasn't been spoken yet
+		let nextMessage: UiMessage | undefined
+		let nextPartIndex: number | undefined
+		for (const m of messages as UiMessage[]) {
+			if (m.role !== "assistant") continue
+			const parts = getAssistantTextParts(m)
+			for (let i = 0; i < parts.length; i++) {
+				const key = `${m.id}:${i}`
+				if (!spokenPartKeysRef.current.has(key)) {
+					nextMessage = m
+					nextPartIndex = i
+					break
+				}
+			}
+			if (nextMessage) break
+		}
+
+		if (!nextMessage || nextPartIndex === undefined) return
+		const textParts = getAssistantTextParts(nextMessage)
+		const text = textParts[nextPartIndex]
+		if (!text) return
+
+		try {
+			isSpeakingRef.current = true
+			const res = await synthesizeSpeech({ text })
+			const currentKey = `${nextMessage.id}:${nextPartIndex}`
+			if (!res.success || !res.audioBase64) {
+				spokenPartKeysRef.current.add(currentKey)
+				isSpeakingRef.current = false
+				return
+			}
+			const audio = new Audio(`data:${res.mimeType || "audio/mpeg"};base64,${res.audioBase64}`)
+			audioRef.current = audio
+			audio.onended = () => {
+				spokenPartKeysRef.current.add(currentKey)
+				isSpeakingRef.current = false
+				playNextSpeech()
+			}
+			audio.onerror = () => {
+				spokenPartKeysRef.current.add(currentKey)
+				isSpeakingRef.current = false
+				playNextSpeech()
+			}
+			audio.play().catch(() => {
+				spokenPartKeysRef.current.add(currentKey)
+				isSpeakingRef.current = false
+				playNextSpeech()
+			})
+		} catch {
+			// Mark the part as attempted to avoid infinite retries
+			const currentKey = `${nextMessage.id}:${nextPartIndex}`
+			spokenPartKeysRef.current.add(currentKey)
+			isSpeakingRef.current = false
+		}
+	}
+
+	useEffect(() => {
+		if (!voiceEnabled) return
+		playNextSpeech()
+	}, [messages, voiceEnabled, status])
+
+	useEffect(() => {
+		if (!voiceEnabled && audioRef.current) {
+			try {
+				audioRef.current.pause()
+			} catch {}
+			isSpeakingRef.current = false
+		}
+	}, [voiceEnabled])
+
 	return (
 		<Dialog open={open} onOpenChange={(open) => !open && onCloseAction()}>
 			<DialogContent className="flex h-[600px] flex-col gap-0 p-0 sm:max-w-md">
@@ -187,6 +282,12 @@ export function ChatDialog({ open, onCloseAction }: ChatDialogProps) {
 							className="text-sm"
 						/>
 						<p className="text-muted-foreground text-xs">Provide your own OpenRouter API key.</p>
+						<div className="flex items-center gap-2 pt-1">
+							<Switch id="voice-enabled" checked={voiceEnabled} onCheckedChange={setVoiceEnabled} />
+							<Label htmlFor="voice-enabled" className="flex items-center gap-1 text-xs">
+								<Volume2 className="h-3 w-3" /> AI Voice
+							</Label>
+						</div>
 					</div>
 				</div>
 
