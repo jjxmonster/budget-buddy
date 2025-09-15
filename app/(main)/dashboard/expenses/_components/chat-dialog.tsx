@@ -49,11 +49,17 @@ export function ChatDialog({ open, onCloseAction }: ChatDialogProps) {
 	const audioRef = useRef<HTMLAudioElement | null>(null)
 	const spokenPartKeysRef = useRef<Set<string>>(new Set())
 	const [isSpeaking, setIsSpeaking] = useState(false)
+	const [isSearching, setIsSearching] = useState(false)
 
 	const { messages, sendMessage, status, setMessages } = useChat({
 		transport: new DefaultChatTransport({
 			api: "/api/chat",
 		}),
+		onToolCall: ({ toolCall }) => {
+			if (toolCall.toolName === "getExpenses") {
+				setIsSearching(true)
+			}
+		},
 		sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
 	})
 
@@ -214,6 +220,7 @@ export function ChatDialog({ open, onCloseAction }: ChatDialogProps) {
 		try {
 			isSpeakingRef.current = true
 			setIsSpeaking(true)
+			setIsSearching(false)
 			const res = await synthesizeSpeech({ text })
 			const currentKey = `${nextMessage.id}:${nextPartIndex}`
 			if (!res.success || !res.audioBase64) {
@@ -228,18 +235,21 @@ export function ChatDialog({ open, onCloseAction }: ChatDialogProps) {
 				spokenPartKeysRef.current.add(currentKey)
 				isSpeakingRef.current = false
 				setIsSpeaking(false)
+				setIsSearching(false)
 				playNextSpeech()
 			}
 			audio.onerror = () => {
 				spokenPartKeysRef.current.add(currentKey)
 				isSpeakingRef.current = false
 				setIsSpeaking(false)
+				setIsSearching(false)
 				playNextSpeech()
 			}
 			audio.play().catch(() => {
 				spokenPartKeysRef.current.add(currentKey)
 				isSpeakingRef.current = false
 				setIsSpeaking(false)
+				setIsSearching(false)
 				playNextSpeech()
 			})
 		} catch {
@@ -293,6 +303,19 @@ export function ChatDialog({ open, onCloseAction }: ChatDialogProps) {
 		)
 	}
 
+	const SearchingIndicator = () => {
+		return (
+			<div className="flex h-40 flex-col items-center justify-center gap-3">
+				<div className="flex gap-1">
+					<span className="bg-primary/80 h-2 w-2 animate-bounce rounded-full [animation-delay:0ms]" />
+					<span className="bg-primary/80 h-2 w-2 animate-bounce rounded-full [animation-delay:120ms]" />
+					<span className="bg-primary/80 h-2 w-2 animate-bounce rounded-full [animation-delay:240ms]" />
+				</div>
+				<p className="text-muted-foreground text-sm">Searching your expenses…</p>
+			</div>
+		)
+	}
+
 	return (
 		<Dialog open={open} onOpenChange={(open) => !open && onCloseAction()}>
 			<DialogContent className="flex h-[600px] flex-col gap-0 p-0 sm:max-w-md">
@@ -327,8 +350,14 @@ export function ChatDialog({ open, onCloseAction }: ChatDialogProps) {
 				<div className="flex-1 space-y-4 overflow-y-auto p-4">
 					{voiceEnabled ? (
 						<div className="flex h-full flex-col items-center justify-center p-8 text-center">
-							<VoiceVisualizer isSpeaking={isSpeaking} />
-							<p className="text-muted-foreground mt-4 text-sm">{isSpeaking ? "AI speaking..." : "AI ready"}</p>
+							{isSearching && !isSpeaking ? (
+								<SearchingIndicator />
+							) : (
+								<>
+									<VoiceVisualizer isSpeaking={isSpeaking} />
+									<p className="text-muted-foreground mt-4 text-sm">{isSpeaking ? "AI speaking..." : "AI ready"}</p>
+								</>
+							)}
 						</div>
 					) : (
 						<div>
