@@ -47,8 +47,8 @@ export function ChatDialog({ open, onCloseAction }: ChatDialogProps) {
 	const recordedChunksRef = useRef<BlobPart[]>([])
 	const isSpeakingRef = useRef(false)
 	const audioRef = useRef<HTMLAudioElement | null>(null)
-	// Track spoken parts using a composite key: `${message.id}:${partIndex}`
 	const spokenPartKeysRef = useRef<Set<string>>(new Set())
+	const [isSpeaking, setIsSpeaking] = useState(false)
 
 	const { messages, sendMessage, status, setMessages } = useChat({
 		transport: new DefaultChatTransport({
@@ -190,7 +190,6 @@ export function ChatDialog({ open, onCloseAction }: ChatDialogProps) {
 	const playNextSpeech = async () => {
 		if (!voiceEnabled || isSpeakingRef.current || status !== "ready") return
 
-		// Find the next assistant text part that hasn't been spoken yet
 		let nextMessage: UiMessage | undefined
 		let nextPartIndex: number | undefined
 		for (const m of messages as UiMessage[]) {
@@ -214,11 +213,13 @@ export function ChatDialog({ open, onCloseAction }: ChatDialogProps) {
 
 		try {
 			isSpeakingRef.current = true
+			setIsSpeaking(true)
 			const res = await synthesizeSpeech({ text })
 			const currentKey = `${nextMessage.id}:${nextPartIndex}`
 			if (!res.success || !res.audioBase64) {
 				spokenPartKeysRef.current.add(currentKey)
 				isSpeakingRef.current = false
+				setIsSpeaking(false)
 				return
 			}
 			const audio = new Audio(`data:${res.mimeType || "audio/mpeg"};base64,${res.audioBase64}`)
@@ -226,23 +227,26 @@ export function ChatDialog({ open, onCloseAction }: ChatDialogProps) {
 			audio.onended = () => {
 				spokenPartKeysRef.current.add(currentKey)
 				isSpeakingRef.current = false
+				setIsSpeaking(false)
 				playNextSpeech()
 			}
 			audio.onerror = () => {
 				spokenPartKeysRef.current.add(currentKey)
 				isSpeakingRef.current = false
+				setIsSpeaking(false)
 				playNextSpeech()
 			}
 			audio.play().catch(() => {
 				spokenPartKeysRef.current.add(currentKey)
 				isSpeakingRef.current = false
+				setIsSpeaking(false)
 				playNextSpeech()
 			})
 		} catch {
-			// Mark the part as attempted to avoid infinite retries
 			const currentKey = `${nextMessage.id}:${nextPartIndex}`
 			spokenPartKeysRef.current.add(currentKey)
 			isSpeakingRef.current = false
+			setIsSpeaking(false)
 		}
 	}
 
@@ -257,8 +261,37 @@ export function ChatDialog({ open, onCloseAction }: ChatDialogProps) {
 				audioRef.current.pause()
 			} catch {}
 			isSpeakingRef.current = false
+			setIsSpeaking(false)
 		}
 	}, [voiceEnabled])
+
+	const VoiceVisualizer = ({ isSpeaking }: { isSpeaking: boolean }) => {
+		const [bars, setBars] = useState<number[]>(Array.from({ length: 8 }, () => 0))
+		useEffect(() => {
+			let intervalId: number | null = null
+			if (isSpeaking) {
+				intervalId = window.setInterval(() => {
+					setBars((prev) => prev.map(() => Math.random()))
+				}, 120)
+			} else {
+				setBars((prev) => prev.map(() => 0.08))
+			}
+			return () => {
+				if (intervalId) window.clearInterval(intervalId)
+			}
+		}, [isSpeaking])
+		return (
+			<div className="flex h-40 items-end justify-center gap-1">
+				{bars.map((v, i) => (
+					<div
+						key={i}
+						className="from-primary/60 to-primary w-2 rounded-full bg-gradient-to-t"
+						style={{ height: `${Math.max(8, Math.floor(v * 100))}%`, transition: "height 120ms ease" }}
+					/>
+				))}
+			</div>
+		)
+	}
 
 	return (
 		<Dialog open={open} onOpenChange={(open) => !open && onCloseAction()}>
@@ -292,116 +325,127 @@ export function ChatDialog({ open, onCloseAction }: ChatDialogProps) {
 				</div>
 
 				<div className="flex-1 space-y-4 overflow-y-auto p-4">
-					{messages.map((message) => (
-						<div
-							key={message.id}
-							className={cn("max-w-[80%] space-y-2", message.role === "user" ? "ml-auto" : "mr-auto")}
-						>
-							{message.parts?.map((part: MessagePart, index) => {
-								switch (part.type) {
-									case "text":
-										return (
-											<div
-												key={index}
-												className={cn(
-													"rounded-lg p-3",
-													message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
-												)}
-											>
-												<span>{part.text}</span>
-											</div>
-										)
-									case "tool-invocation":
-										if (!part.toolInvocation) return null
-										switch (part.toolInvocation.state) {
-											case "partial-call":
+					{voiceEnabled ? (
+						<div className="flex h-full flex-col items-center justify-center p-8 text-center">
+							<VoiceVisualizer isSpeaking={isSpeaking} />
+							<p className="text-muted-foreground mt-4 text-sm">{isSpeaking ? "AI speaking..." : "AI ready"}</p>
+						</div>
+					) : (
+						<div>
+							{messages.map((message) => (
+								<div
+									key={message.id}
+									className={cn("max-w-[80%] space-y-2", message.role === "user" ? "ml-auto" : "mr-auto")}
+								>
+									{message.parts?.map((part: MessagePart, index) => {
+										switch (part.type) {
+											case "text":
 												return (
-													<div key={index} className="rounded-lg border border-blue-200 bg-blue-50 p-3">
-														<div className="flex items-center space-x-2">
-															<Loader2 className="h-3 w-3 animate-spin text-blue-600" />
-															<span className="text-sm text-blue-800">Calling {part.toolInvocation.toolName}...</span>
-														</div>
+													<div
+														key={index}
+														className={cn(
+															"rounded-lg p-3",
+															message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
+														)}
+													>
+														<span>{part.text}</span>
 													</div>
 												)
-											case "call":
-												return (
-													<div key={index} className="rounded-lg border border-yellow-200 bg-yellow-50 p-3">
-														<div className="flex items-center space-x-2">
-															<Loader2 className="h-3 w-3 animate-spin text-yellow-600" />
-															<span className="text-sm text-yellow-800">
-																Executing {part.toolInvocation.toolName}...
-															</span>
-														</div>
-													</div>
-												)
-											case "result":
-												return (
-													<div key={index} className="rounded-lg border border-green-200 bg-green-50 p-3">
-														<div className="text-sm text-green-800">
-															<strong>{part.toolInvocation.toolName} completed</strong>
-															{part.toolInvocation.result && (
-																<div className="mt-1 text-xs">
-																	{(() => {
-																		const res = part.toolInvocation?.result as Record<string, unknown>
-																		if (res?.success === false && res?.error) {
-																			return <span className="text-red-700">Error: {String(res.error)}</span>
-																		}
-																		if (res?.message) {
-																			return <span className="text-green-700">{String(res.message)}</span>
-																		}
-																		if (Array.isArray(res?.data)) {
-																			return <span className="text-green-700">Found {res.data.length} item(s)</span>
-																		}
-																		return null
-																	})()}
+											case "tool-invocation":
+												if (!part.toolInvocation) return null
+												switch (part.toolInvocation.state) {
+													case "partial-call":
+														return (
+															<div key={index} className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+																<div className="flex items-center space-x-2">
+																	<Loader2 className="h-3 w-3 animate-spin text-blue-600" />
+																	<span className="text-sm text-blue-800">
+																		Calling {part.toolInvocation.toolName}...
+																	</span>
 																</div>
-															)}
-														</div>
-													</div>
-												)
+															</div>
+														)
+													case "call":
+														return (
+															<div key={index} className="rounded-lg border border-yellow-200 bg-yellow-50 p-3">
+																<div className="flex items-center space-x-2">
+																	<Loader2 className="h-3 w-3 animate-spin text-yellow-600" />
+																	<span className="text-sm text-yellow-800">
+																		Executing {part.toolInvocation.toolName}...
+																	</span>
+																</div>
+															</div>
+														)
+													case "result":
+														return (
+															<div key={index} className="rounded-lg border border-green-200 bg-green-50 p-3">
+																<div className="text-sm text-green-800">
+																	<strong>{part.toolInvocation.toolName} completed</strong>
+																	{part.toolInvocation.result && (
+																		<div className="mt-1 text-xs">
+																			{(() => {
+																				const res = part.toolInvocation?.result as Record<string, unknown>
+																				if (res?.success === false && res?.error) {
+																					return <span className="text-red-700">Error: {String(res.error)}</span>
+																				}
+																				if (res?.message) {
+																					return <span className="text-green-700">{String(res.message)}</span>
+																				}
+																				if (Array.isArray(res?.data)) {
+																					return <span className="text-green-700">Found {res.data.length} item(s)</span>
+																				}
+																				return null
+																			})()}
+																		</div>
+																	)}
+																</div>
+															</div>
+														)
+													default:
+														return null
+												}
 											default:
 												return null
 										}
-									default:
-										return null
-								}
-							})}
+									})}
 
-							{status === "streaming" &&
-								message.role === "assistant" &&
-								messages.indexOf(message) === messages.length - 1 && (
-									<div className="bg-muted rounded-lg p-3">
-										<div className="flex items-center space-x-2">
-											<Loader2 className="h-4 w-4 animate-spin" />
-											<span className="text-sm">Typing...</span>
+									{status === "streaming" &&
+										message.role === "assistant" &&
+										messages.indexOf(message) === messages.length - 1 && (
+											<div className="bg-muted rounded-lg p-3">
+												<div className="flex items-center space-x-2">
+													<Loader2 className="h-4 w-4 animate-spin" />
+													<span className="text-sm">Typing...</span>
+												</div>
+											</div>
+										)}
+
+									{message.role === "assistant" && message.parts?.some((part) => part.type === "text" && part.text) && (
+										<div className="flex justify-end space-x-2 pt-1">
+											<span className="text-muted-foreground mr-2 text-xs">Was this helpful?</span>
+											<Button
+												variant="ghost"
+												size="icon"
+												className="h-6 w-6"
+												onClick={() => handleFeedback(message.id, true)}
+											>
+												<ThumbsUp className="h-3 w-3" />
+											</Button>
+											<Button
+												variant="ghost"
+												size="icon"
+												className="h-6 w-6"
+												onClick={() => handleFeedback(message.id, false)}
+											>
+												<ThumbsDown className="h-3 w-3" />
+											</Button>
 										</div>
-									</div>
-								)}
-
-							{message.role === "assistant" && message.parts?.some((part) => part.type === "text" && part.text) && (
-								<div className="flex justify-end space-x-2 pt-1">
-									<span className="text-muted-foreground mr-2 text-xs">Was this helpful?</span>
-									<Button
-										variant="ghost"
-										size="icon"
-										className="h-6 w-6"
-										onClick={() => handleFeedback(message.id, true)}
-									>
-										<ThumbsUp className="h-3 w-3" />
-									</Button>
-									<Button
-										variant="ghost"
-										size="icon"
-										className="h-6 w-6"
-										onClick={() => handleFeedback(message.id, false)}
-									>
-										<ThumbsDown className="h-3 w-3" />
-									</Button>
+									)}
 								</div>
-							)}
+							))}
+							<div ref={messagesEndRef} />
 						</div>
-					))}
-					<div ref={messagesEndRef} />
+					)}
 				</div>
 
 				<form onSubmit={handleSubmit} className="border-t p-4">
