@@ -6,7 +6,7 @@ export const env = createEnv({
 		SUPABASE_URL: z.string(),
 		SUPABASE_KEY: z.string(),
 		OPENROUTER_API_KEY: z.string().optional(),
-		ELEVENLABS_API_KEY: z.string(),
+		ELEVENLABS_API_KEY: z.string().optional(),
 	},
 	runtimeEnv: {
 		SUPABASE_URL: process.env.SUPABASE_URL,
