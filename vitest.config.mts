@@ -4,7 +4,7 @@ import { defineConfig } from "vitest/config"
 import { resolve } from "path"
 
 export default defineConfig({
-	// @ts-nocheck
+	// @ts-expect-error - Plugin version compatibility issue between vite versions
 	plugins: [tsconfigPaths(), react()],
 	test: {
 		environment: "jsdom",
